@@ -1,0 +1,31 @@
+# Ignore compiled object files, executables, and libraries
+*.o
+*.obj
+*.exe
+*.out
+*.app
+
+# Static and dynamic libraries
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+
+# Debug and temporary files
+*~
+*.swp
+*.swo
+*.tmp
+
+# CMake build directories (CLion uses CMake by default)
+cmake-build-*/
+
+# CLion specific settings and caches
+.idea/
+
+# VSCode settings
+.vscode/
+
+# macOS system files
+.DS_Store

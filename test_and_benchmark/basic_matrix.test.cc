@@ -1,0 +1,199 @@
+//
+// Created by Hengyi Zhao on 2024/11/28.
+//
+
+#include <gtest/gtest.h>
+
+#include "abaqus_subroutine_forge.h"
+
+TEST(MatrixTest, CreateMatrix2D) {
+  Matrix2D mat = create_matrix_2D(1.0, 2.0, 3.0, 4.0);
+
+  EXPECT_EQ(mat.type, Matrix2X2);
+  EXPECT_DOUBLE_EQ(mat.data[0][0], 1.0);
+  EXPECT_DOUBLE_EQ(mat.data[0][1], 2.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][0], 3.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][1], 4.0);
+}
+
+TEST(MatrixTest, CreateEmptyMatrix2D) {
+  Matrix2D mat = create_empty_matrix_2D();
+
+  EXPECT_DOUBLE_EQ(mat.data[0][0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[0][1], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][1], 0.0);
+}
+
+TEST(MatrixTest, CreateEyeMatrix2D) {
+  Matrix2D mat = create_eye_matrix_2D();
+
+  EXPECT_DOUBLE_EQ(mat.data[0][0], 1.0);
+  EXPECT_DOUBLE_EQ(mat.data[0][1], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][1], 1.0);
+}
+
+TEST(MatrixTest, Matrix2DGetElement) {
+  Matrix2D mat = create_matrix_2D(1.0, 2.0, 3.0, 4.0);
+
+  EXPECT_DOUBLE_EQ(matrix_2D_get_element(&mat, 0, 0), 1.0);
+  EXPECT_DOUBLE_EQ(matrix_2D_get_element(&mat, 0, 1), 2.0);
+  EXPECT_DOUBLE_EQ(matrix_2D_get_element(&mat, 1, 0), 3.0);
+  EXPECT_DOUBLE_EQ(matrix_2D_get_element(&mat, 1, 1), 4.0);
+}
+
+TEST(MatrixTest, Matrix2DGetElementOutOfBounds) {
+  Matrix2D mat = create_matrix_2D(1.0, 2.0, 3.0, 4.0);
+
+  EXPECT_DEATH(matrix_2D_get_element(&mat, 2, 2),
+               "FATAL: Index out of bounds \\(row: 2, col: 2\\)!");
+}
+
+TEST(MatrixTest, CreateMatrix3D) {
+  Matrix3D mat = create_matrix_3D(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+
+  EXPECT_EQ(mat.type, Matrix3X3);
+  EXPECT_DOUBLE_EQ(mat.data[0][0], 1.0);
+  EXPECT_DOUBLE_EQ(mat.data[0][1], 2.0);
+  EXPECT_DOUBLE_EQ(mat.data[0][2], 3.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][0], 4.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][1], 5.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][2], 6.0);
+  EXPECT_DOUBLE_EQ(mat.data[2][0], 7.0);
+  EXPECT_DOUBLE_EQ(mat.data[2][1], 8.0);
+  EXPECT_DOUBLE_EQ(mat.data[2][2], 9.0);
+}
+
+TEST(MatrixTest, CreateEmptyMatrix3D) {
+  Matrix3D mat = create_empty_matrix_3D();
+
+  EXPECT_DOUBLE_EQ(mat.data[0][0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[0][1], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[0][2], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][1], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][2], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[2][0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[2][1], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[2][2], 0.0);
+}
+
+TEST(MatrixTest, CreateEyeMatrix3D) {
+  Matrix3D mat = create_eye_matrix_3D();
+
+  EXPECT_DOUBLE_EQ(mat.data[0][0], 1.0);
+  EXPECT_DOUBLE_EQ(mat.data[0][1], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[0][2], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][1], 1.0);
+  EXPECT_DOUBLE_EQ(mat.data[1][2], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[2][0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[2][1], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[2][2], 1.0);
+}
+
+TEST(MatrixTest, Matrix3DGetElement) {
+  Matrix3D mat = create_matrix_3D(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+
+  EXPECT_DOUBLE_EQ(matrix_3D_get_element(&mat, 0, 0), 1.0);
+  EXPECT_DOUBLE_EQ(matrix_3D_get_element(&mat, 0, 1), 2.0);
+  EXPECT_DOUBLE_EQ(matrix_3D_get_element(&mat, 0, 2), 3.0);
+  EXPECT_DOUBLE_EQ(matrix_3D_get_element(&mat, 1, 0), 4.0);
+  EXPECT_DOUBLE_EQ(matrix_3D_get_element(&mat, 1, 1), 5.0);
+  EXPECT_DOUBLE_EQ(matrix_3D_get_element(&mat, 1, 2), 6.0);
+  EXPECT_DOUBLE_EQ(matrix_3D_get_element(&mat, 2, 0), 7.0);
+  EXPECT_DOUBLE_EQ(matrix_3D_get_element(&mat, 2, 1), 8.0);
+  EXPECT_DOUBLE_EQ(matrix_3D_get_element(&mat, 2, 2), 9.0);
+}
+
+TEST(MatrixTest, Matrix3DGetElementOutOfBounds) {
+  Matrix3D mat = create_matrix_3D(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+
+  EXPECT_DEATH(matrix_3D_get_element(&mat, 3, 3),
+               "FATAL: Index out of bounds \\(row: 3, col: 3\\)!");
+}
+
+TEST(VectorTest, CreateVector2D) {
+  Vector2D mat = create_vector_2D(1.0, 2.0);
+
+  EXPECT_EQ(mat.type, Vector2X1);
+  EXPECT_DOUBLE_EQ(mat.data[0], 1.0);
+  EXPECT_DOUBLE_EQ(mat.data[1], 2.0);
+}
+
+TEST(VectorTest, CreateEmptyVector2D) {
+  Vector2D mat = create_empty_vector_2D();
+
+  EXPECT_DOUBLE_EQ(mat.data[0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1], 0.0);
+}
+
+TEST(VectorTest, Vector2DGetElement) {
+  Vector2D mat = create_vector_2D(1.0, 2.0);
+
+  EXPECT_DOUBLE_EQ(vector_2D_get_element(&mat, 0), 1.0);
+  EXPECT_DOUBLE_EQ(vector_2D_get_element(&mat, 1), 2.0);
+}
+
+TEST(VectorTest, Vector2DGetElementOutOfBounds) {
+  Vector2D mat = create_vector_2D(1.0, 2.0);
+
+  EXPECT_DEATH(vector_2D_get_element(&mat, 3),
+               "FATAL: Index out of bounds \\(row: 3\\)!");
+}
+
+TEST(VectorTest, CreateVector3D) {
+  Vector3D mat = create_vector_3D(1.0, 2.0, 3.0);
+
+  EXPECT_EQ(mat.type, Vector3X1);
+  EXPECT_DOUBLE_EQ(mat.data[0], 1.0);
+  EXPECT_DOUBLE_EQ(mat.data[1], 2.0);
+  EXPECT_DOUBLE_EQ(mat.data[2], 3.0);
+}
+
+TEST(VectorTest, CreateEmptyVector3D) {
+  Vector3D mat = create_empty_vector_3D();
+
+  EXPECT_DOUBLE_EQ(mat.data[0], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[1], 0.0);
+  EXPECT_DOUBLE_EQ(mat.data[2], 0.0);
+}
+
+TEST(VectorTest, Vector3DGetElement) {
+  Vector3D mat = create_vector_3D(1.0, 2.0, 3.0);
+
+  EXPECT_DOUBLE_EQ(vector_3D_get_element(&mat, 0), 1.0);
+  EXPECT_DOUBLE_EQ(vector_3D_get_element(&mat, 1), 2.0);
+  EXPECT_DOUBLE_EQ(vector_3D_get_element(&mat, 2), 3.0);
+}
+
+TEST(VectorTest, Vector3DGetElementOutOfBounds) {
+  Vector3D mat = create_vector_3D(1.0, 2.0, 3.0);
+
+  EXPECT_DEATH(vector_3D_get_element(&mat, 3),
+               "FATAL: Index out of bounds \\(row: 3\\)!");
+}
+
+// print function test to de-warning by IDE
+TEST(NaiveTest, CallPrintFunctions) {
+  Matrix2D mat2d = create_empty_matrix_2D();
+  Matrix3D mat3d = create_empty_matrix_3D();
+  Vector2D vec2d = create_empty_vector_2D();
+  Vector3D vec3d = create_empty_vector_3D();
+  Vector6D vec6d = create_empty_vector_6D();
+  MatrixB36 matb36 = create_empty_matrix_B36();
+  MatrixB63 matb63 = create_matrix_B63_from_B36(&matb36);
+  Matrix6D mat6d = create_empty_matrix_6D();
+
+  matrix_2D_print(&mat2d);
+  matrix_3D_print(&mat3d);
+  vector_2D_print(&vec2d);
+  vector_3D_print(&vec3d);
+  vector_6D_print(&vec6d);
+  matrix_B36_print(&matb36);
+  matrix_B63_print(&matb63);
+  matrix_6D_print(&mat6d);
+
+  SUCCEED();  // no need to check output content, just call functions
+}
