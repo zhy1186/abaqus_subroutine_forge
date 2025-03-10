@@ -112,7 +112,7 @@ int main() {
 - **Performance considerations**: This implementation is designed for small-scale matrix operations common in finite element computations. For large matrices, consider optimized libraries such as LAPACK or Eigen.
 
 ## License and Contact
-- Created by **Hengyi Zhao (zhaohy19@mails.thu.edu.cn)**
+- Created by **Hengyi Zhao (zhaohy19@mails.tsinghua.edu.cn)**
 - Version: **1.0.0**
 - Designed for ABAQUS user-defined element (UEL) subroutine development.
 

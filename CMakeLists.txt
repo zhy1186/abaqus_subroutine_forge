@@ -9,3 +9,4 @@ find_package(Eigen3)
 enable_testing()
 
 add_subdirectory(test_and_benchmark)
+add_subdirectory(uels)

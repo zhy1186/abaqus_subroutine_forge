@@ -1,13 +1,14 @@
 // abaqus_subroutine_forge.h -- header for ABAQUS user-subroutine development
-// Created by Hengyi Zhao (zhaohy19@mails.thu.edu.cn) on 2024/11/28
-// @version 0.1
+// Created by Hengyi Zhao (zhaohy19@mails.thu.edu.cn) on 2025/03/06
+//
 
 // disable clang-tidy IDE C++ check
 #pragma once
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-deprecated-headers"
 
-// designed header-only for ABAQUS development
+// designed header-only for ABAQUS subroutine development
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
