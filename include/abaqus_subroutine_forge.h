@@ -3,12 +3,15 @@
 //
 
 // disable clang-tidy IDE C++ check
+
 #pragma once
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-deprecated-headers"
 #pragma ide diagnostic ignored "modernize-use-auto"
 #pragma ide diagnostic ignored "modernize-use-nullptr"
+#pragma ide diagnostic ignored "UnusedLocalVariable"
+#pragma ide diagnostic ignored "UnusedValue"
 
 // designed header-only for ABAQUS subroutine development
 #include <stdarg.h>
@@ -63,7 +66,12 @@ double matrix_2D_get_element(const Matrix2D* mat, int row, int col) {
 
 Matrix2D create_matrix_2D(double ele11, double ele12, double ele21,
                           double ele22) {
-  Matrix2D mat = {.type = Matrix2X2, .data = {{ele11, ele12}, {ele21, ele22}}};
+  Matrix2D mat;
+  mat.type = Matrix2X2;
+  mat.data[0][0] = ele11;
+  mat.data[0][1] = ele12;
+  mat.data[1][0] = ele21;
+  mat.data[1][1] = ele22;
   return mat;
 }
 
@@ -94,10 +102,17 @@ double matrix_3D_get_element(const Matrix3D* mat, int row, int col) {
 Matrix3D create_matrix_3D(double ele11, double ele12, double ele13,
                           double ele21, double ele22, double ele23,
                           double ele31, double ele32, double ele33) {
-  Matrix3D mat = {
-      .type = Matrix3X3,
-      .data = {
-          {ele11, ele12, ele13}, {ele21, ele22, ele23}, {ele31, ele32, ele33}}};
+  Matrix3D mat;
+  mat.type = Matrix3X3;
+  mat.data[0][0] = ele11;
+  mat.data[0][1] = ele12;
+  mat.data[0][2] = ele13;
+  mat.data[1][0] = ele21;
+  mat.data[1][1] = ele22;
+  mat.data[1][2] = ele23;
+  mat.data[2][0] = ele31;
+  mat.data[2][1] = ele32;
+  mat.data[2][2] = ele33;
   return mat;
 }
 
@@ -127,7 +142,10 @@ double vector_2D_get_element(const Vector2D* mat, int row) {
 }
 
 Vector2D create_vector_2D(double ele11, double ele21) {
-  Vector2D mat = {.type = Vector2X1, .data = {ele11, ele21}};
+  Vector2D mat;
+  mat.type = Vector2X1;
+  mat.data[0] = ele11;
+  mat.data[1] = ele21;
   return mat;
 }
 
@@ -151,8 +169,12 @@ double vector_3D_get_element(const Vector3D* mat, int row) {
 }
 
 Vector3D create_vector_3D(double ele11, double ele21, double ele31) {
-  Vector3D mat = {.type = Vector3X1, .data = {ele11, ele21, ele31}};
-  return mat;
+  Vector3D vec;
+  vec.type = Vector3X1;
+  vec.data[0] = ele11;
+  vec.data[1] = ele21;
+  vec.data[2] = ele31;
+  return vec;
 }
 
 Vector3D create_empty_vector_3D() { return create_vector_3D(0, 0, 0); }
@@ -187,10 +209,26 @@ MatrixB36 create_matrix_B36(double ele11, double ele12, double ele13,
                             double ele24, double ele25, double ele26,
                             double ele31, double ele32, double ele33,
                             double ele34, double ele35, double ele36) {
-  MatrixB36 mat = {.type = MatrixB3X6,
-                   .data = {{ele11, ele12, ele13, ele14, ele15, ele16},
-                            {ele21, ele22, ele23, ele24, ele25, ele26},
-                            {ele31, ele32, ele33, ele34, ele35, ele36}}};
+  MatrixB36 mat;
+  mat.type = MatrixB3X6;
+  mat.data[0][0] = ele11;
+  mat.data[0][1] = ele12;
+  mat.data[0][2] = ele13;
+  mat.data[0][3] = ele14;
+  mat.data[0][4] = ele15;
+  mat.data[0][5] = ele16;
+  mat.data[1][0] = ele21;
+  mat.data[1][1] = ele22;
+  mat.data[1][2] = ele23;
+  mat.data[1][3] = ele24;
+  mat.data[1][4] = ele25;
+  mat.data[1][5] = ele26;
+  mat.data[2][0] = ele31;
+  mat.data[2][1] = ele32;
+  mat.data[2][2] = ele33;
+  mat.data[2][3] = ele34;
+  mat.data[2][4] = ele35;
+  mat.data[2][5] = ele36;
   return mat;
 }
 
@@ -223,15 +261,26 @@ double matrix_B63_get_element(const MatrixB63* mat, int row, int col) {
 }
 
 MatrixB63 create_matrix_B63_from_B36(MatrixB36* mat_b36) {
-  MatrixB63 mat_b63 = {
-      .type = MatrixB6X3,
-      .data = {
-          {mat_b36->data[0][0], mat_b36->data[1][0], mat_b36->data[2][0]},
-          {mat_b36->data[0][1], mat_b36->data[1][1], mat_b36->data[2][1]},
-          {mat_b36->data[0][2], mat_b36->data[1][2], mat_b36->data[2][2]},
-          {mat_b36->data[0][3], mat_b36->data[1][3], mat_b36->data[2][3]},
-          {mat_b36->data[0][4], mat_b36->data[1][4], mat_b36->data[2][4]},
-          {mat_b36->data[0][5], mat_b36->data[1][5], mat_b36->data[2][5]}}};
+  MatrixB63 mat_b63;
+  mat_b63.type = MatrixB6X3;
+  mat_b63.data[0][0] = mat_b36->data[0][0];
+  mat_b63.data[0][1] = mat_b36->data[1][0];
+  mat_b63.data[0][2] = mat_b36->data[2][0];
+  mat_b63.data[1][0] = mat_b36->data[0][1];
+  mat_b63.data[1][1] = mat_b36->data[1][1];
+  mat_b63.data[1][2] = mat_b36->data[2][1];
+  mat_b63.data[2][0] = mat_b36->data[0][2];
+  mat_b63.data[2][1] = mat_b36->data[1][2];
+  mat_b63.data[2][2] = mat_b36->data[2][2];
+  mat_b63.data[3][0] = mat_b36->data[0][3];
+  mat_b63.data[3][1] = mat_b36->data[1][3];
+  mat_b63.data[3][2] = mat_b36->data[2][3];
+  mat_b63.data[4][0] = mat_b36->data[0][4];
+  mat_b63.data[4][1] = mat_b36->data[1][4];
+  mat_b63.data[4][2] = mat_b36->data[2][4];
+  mat_b63.data[5][0] = mat_b36->data[0][5];
+  mat_b63.data[5][1] = mat_b36->data[1][5];
+  mat_b63.data[5][2] = mat_b36->data[2][5];
   return mat_b63;
 }
 
@@ -277,13 +326,44 @@ Matrix6D create_matrix_6D(
     double ele52, double ele53, double ele54, double ele55, double ele56,
     double ele61, double ele62, double ele63, double ele64, double ele65,
     double ele66) {
-  Matrix6D mat = {.type = Matrix6X6,
-                  .data = {{ele11, ele12, ele13, ele14, ele15, ele16},
-                           {ele21, ele22, ele23, ele24, ele25, ele26},
-                           {ele31, ele32, ele33, ele34, ele35, ele36},
-                           {ele41, ele42, ele43, ele44, ele45, ele46},
-                           {ele51, ele52, ele53, ele54, ele55, ele56},
-                           {ele61, ele62, ele63, ele64, ele65, ele66}}};
+  Matrix6D mat;
+  mat.type = Matrix6X6;
+  mat.data[0][0] = ele11;
+  mat.data[0][1] = ele12;
+  mat.data[0][2] = ele13;
+  mat.data[0][3] = ele14;
+  mat.data[0][4] = ele15;
+  mat.data[0][5] = ele16;
+  mat.data[1][0] = ele21;
+  mat.data[1][1] = ele22;
+  mat.data[1][2] = ele23;
+  mat.data[1][3] = ele24;
+  mat.data[1][4] = ele25;
+  mat.data[1][5] = ele26;
+  mat.data[2][0] = ele31;
+  mat.data[2][1] = ele32;
+  mat.data[2][2] = ele33;
+  mat.data[2][3] = ele34;
+  mat.data[2][4] = ele35;
+  mat.data[2][5] = ele36;
+  mat.data[3][0] = ele41;
+  mat.data[3][1] = ele42;
+  mat.data[3][2] = ele43;
+  mat.data[3][3] = ele44;
+  mat.data[3][4] = ele45;
+  mat.data[3][5] = ele46;
+  mat.data[4][0] = ele51;
+  mat.data[4][1] = ele52;
+  mat.data[4][2] = ele53;
+  mat.data[4][3] = ele54;
+  mat.data[4][4] = ele55;
+  mat.data[4][5] = ele56;
+  mat.data[5][0] = ele61;
+  mat.data[5][1] = ele62;
+  mat.data[5][2] = ele63;
+  mat.data[5][3] = ele64;
+  mat.data[5][4] = ele65;
+  mat.data[5][5] = ele66;
   return mat;
 }
 
@@ -329,9 +409,15 @@ double vector_6D_get_element(const Vector6D* mat, int row) {
 
 Vector6D create_vector_6D(double ele11, double ele21, double ele31,
                           double ele41, double ele51, double ele61) {
-  Vector6D mat = {.type = Vector6X1,
-                  .data = {ele11, ele21, ele31, ele41, ele51, ele61}};
-  return mat;
+  Vector6D vec;
+  vec.type = Vector6X1;
+  vec.data[0] = ele11;
+  vec.data[1] = ele21;
+  vec.data[2] = ele31;
+  vec.data[3] = ele41;
+  vec.data[4] = ele51;
+  vec.data[5] = ele61;
+  return vec;
 }
 
 Vector6D create_empty_vector_6D() { return create_vector_6D(0, 0, 0, 0, 0, 0); }
@@ -614,12 +700,13 @@ typedef struct CPS3NodalInfo {
 CPS3NodalInfo create_CPS3_nodal_info(double node1_dof1, double node1_dof2,
                                      double node2_dof1, double node2_dof2,
                                      double node3_dof1, double node3_dof2) {
-  CPS3NodalInfo info = {.node1_dof1 = node1_dof1,
-                        .node1_dof2 = node1_dof2,
-                        .node2_dof1 = node2_dof1,
-                        .node2_dof2 = node2_dof2,
-                        .node3_dof1 = node3_dof1,
-                        .node3_dof2 = node3_dof2};
+  CPS3NodalInfo info;
+  info.node1_dof1 = node1_dof1;
+  info.node1_dof2 = node1_dof2;
+  info.node2_dof1 = node2_dof1;
+  info.node2_dof2 = node2_dof2;
+  info.node3_dof1 = node3_dof1;
+  info.node3_dof2 = node3_dof2;
   return info;
 }
 
@@ -835,7 +922,6 @@ Matrix6D CPS3_compute_initial_element_stiffness_matrix(
   return K;
 }
 
-// todo : impl gtest
 CPS3NodalInfo CPS3_compute_inner_force(const CPS3NodalInfo* X1Y1X2Y2X3Y3,
                                        const CPS3NodalInfo* u1v1u2v2u3v3,
                                        const Matrix3D* property,
