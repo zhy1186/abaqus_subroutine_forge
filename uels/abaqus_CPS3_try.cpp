@@ -1,3 +1,5 @@
+extern "C" {
+
 #include "abaqus_subroutine_forge.h"
 #include "communication.h"
 
@@ -8,42 +10,71 @@
 
 // configurations must be reviewed each time run ABAQUS with UEL
 // element number of the inp file
-#define ELEMENT_NUM 10l
-// delta num of element no. - dummy element no. (note : element no is larger.)
-#define DUMMY_ELEMENT_DELTA_NUM 100l
+#define ELEMENT_NUM 2
 
 CPS3CommInfo comm_info[ELEMENT_NUM];
 
-// old signature from ABAQUS docs:
-// void uel(double *rhs, double *amatrx, double *svars, double *energy,
-//         int *ndofel, int *nrhs, int *nsvars, double *props, int *nprops,
-//         double *coords, int *mcrd, int *nnode, double *u, double *du,
-//         double *v, double *a, int *jtype, double *time, double *dtime,
-//         int *kstep, int *kinc, int *jelem, double *params, int *ndload,
-//         int *jdltyp, double *adlmag, double *predef, int *npredf, int
-//         *lflags, int *mlvarx, double *ddlmag, int *mdload, double *pnewdt,
-//         int *jprops, int *njprop, double *period)
-void uel(double *abaqus_residual_force_array, double *element_stiffness_matrix,
-         double *solution_dependent_vars_array, double *energy_array,
-         int *element_dof_num, int *load_vec_num,
-         int *solution_dependent_vars_num, double *properties_array,
-         int *properties_num, double *original_coords_array,
-         int *max_node_dof_value, int *element_node_num,
-         double *displacement_array,
-         double *incremental_values_of_displacement_array,
-         double *velocity_array, double *acceleration_array,
-         int *element_type_ID, double *current_step_time_and_total_time_values,
-         double *time_increment_value, int *current_step_num,
-         int *current_increment_num, int *element_no_ID,
-         double *params_for_implicit_dynamics, int *distributed_load_ID,
-         int *distributed_load_type_integer,
-         double *total_distributed_load_array,
-         double *predefined_field_vars_array, int *predefined_field_vars_num,
-         int *current_procedure_type_ID, int *rhs_vec_index_if_more_than_one,
-         double *distribute_load_increment_mag,
-         int *element_distributed_load_total_num,
-         double *suggested_new_time_increment_ratio, int *int_properties_array,
-         int *int_properties_num, double *time_period) {
+void uel(
+    /* below 4 info should be updated */
+    double *abaqus_residual_force_array /* RHS : contribution to rhs vector*/,
+    double *element_stiffness_matrix /* AMATRX : contribution to stiffness*/,
+    double *solution_dependent_vars_array /* SVARS : solution-dependent state*/,
+    double *energy_array /* ENERGY : energy quantities corresponding */,
+    /* below variables passed in for information */
+    int *element_dof_num /*NDOFEL : number of dof in the element*/,
+    int *load_vec_num /* NRHS : number of load vectors, often = 1 for general*/,
+    int *solution_dependent_vars_num /* NSVARS : number of SDVs */,
+    double *properties_array /* PROPS : real property values */,
+    int *properties_num /* NPROPS : number of real property values */,
+    double *original_coords_array /* COORDS : original coordinates of nodes */,
+    int *max_node_dof_value /* MCRD : max{num_of_coords,largest_active_dof} */,
+    int *element_node_num /* NNODE : number of nodes on element */,
+    double *displacement_array /* U : array of displacement */,
+    /* DU : incremental values of the current increment for rhs [? need test]*/
+    double *incremental_values_of_displacement_array,
+    double *velocity_array /* V : velocity array */,
+    double *acceleration_array /* A : acceleration array */,
+    int *element_type_ID /* JTYPE : element type */,
+    /* TIME : array(2) contain : current value of step time and total time*/
+    double *current_step_time_and_total_time_values,
+    double *time_increment_value /* DTIME : time increment */,
+    int *current_step_num /* KSTEP : current step number */,
+    int *current_increment_num /* KINC : current increment number */,
+    int *element_no_ID /* JELEM : user-assigned element number */,
+    double *params_for_implicit_dynamics /* PARAMS : implicit dynamics params*/,
+    /* below few vars contains distributed load and pre-defined field info*/
+    int *distributed_load_ID /* NDLOAD : ID of distribute load of element*/,
+    int *distributed_load_type_integer /* JDLTYP :  distribute load type*/,
+    double *total_distributed_load_array /* ADLMAG : total load magnitude */,
+    double *predefined_field_vars_array /* PREDEF : predefined field vars */,
+    int *predefined_field_vars_num /* NPREDF : num of predefined field vars*/,
+    int *current_procedure_type_ID /* LFLAGS : flags on step procedure type*/,
+    int *rhs_vec_index_if_more_than_one /* MLVARX : params on several rhs vec*/,
+    double *distribute_load_increment_mag /* DDLMAG : inc mag in dload */,
+    int *element_distributed_load_total_num /* MDLOAD : total num of dload*/,
+    /* this info can be updated */
+    double *suggested_new_time_increment_ratio /* PNEWDT : suggested new dt*/,
+    /* below 3 info make no sense in most case */
+    int *int_properties_array /* JPROPS : array of int properties */,
+    int *int_properties_num /* NJPROP : unm of int properties */,
+    double *time_period /* PERIOD : time period of current step*/) {
+  // print head info
+  UELCriticalInfo uel_critical_info = create_UEL_critical_info(
+      element_no_ID, element_type_ID, current_step_num, current_increment_num);
+  print_UEL_critical_info(&uel_critical_info);
+  // print basic info
+  UELBasicInfo uel_basic_info = create_UEL_basic_info(
+      element_dof_num, solution_dependent_vars_num, properties_num,
+      element_node_num, element_type_ID,
+      current_step_time_and_total_time_values, time_increment_value,
+      current_step_num, current_increment_num, element_no_ID);
+  print_UEL_basic_info(&uel_basic_info);
+  // print passed-in info
+  UELPassedInInfo uel_passed_in_info = create_UEL_passed_in_info(
+      properties_num, properties_array, element_dof_num, original_coords_array,
+      displacement_array);
+  print_UEL_passed_in_info(&uel_passed_in_info);
+
   // basic passed-in variables
   double X1 = original_coords_array[0], Y1 = original_coords_array[1],
          X2 = original_coords_array[2], Y2 = original_coords_array[3],
@@ -85,6 +116,10 @@ void uel(double *abaqus_residual_force_array, double *element_stiffness_matrix,
   double strain_energy_density = CPS3_E_and_T_to_strain_energy_density(&E, &T);
   CPS3VolumeEnergyInfo volume_energy_info = create_CPS3_volume_energy_info(
       current_area, current_thickness, strain_energy_density);
+  // update energy info to ABAQUS
+  // todo : energy(8) (distributed work done) is not update for now.
+  energy_array[0] = 0;  // kinetic energy
+  energy_array[1] = strain_energy_density * current_area * current_thickness;
 
   // transfer info to umat for post-processing ODB results
   CPS3CommInfo element_comm_info = create_empty_CPS3_common_info();
@@ -95,39 +130,67 @@ void uel(double *abaqus_residual_force_array, double *element_stiffness_matrix,
 }
 
 // only used for dummy element properties for viewing ODB results
-// old signature from ABAQUS docs:
-// void umat(double *stress_array, double *solution_dependent_vars_array, double
-// *properties_matrix, double *sse,
-//          double *spd, double *scd, double *rpl, double *ddsddt, double
-//          *drplde, double *drpldt, double *strain_array, double
-//          *strain_increment_array, double *time, double *dtime, double *temp,
-//          double *dtemp, double *predef, double *dpred, char *cmname, int
-//          *ndi, int *nshr, int *ntens, int *nstatv, double *props, int
-//          *nprops, double *coords, double *drot, double *pnewdt, double
-//          *celent, double *dfgrd0, double *dfgrd1, int *noel, int *npt, int
-//          *layer, int *kspt, int *jstep, int *kinc)
-void umat(double *stress_array, double *solution_dependent_vars_array,
-          double *properties_matrix, double *elastic_strain_energy_value,
-          double *plastic_dissipation_value, double *creep_dissipation_value,
-          double *volumetric_heat_generation_rate_value,
-          double *stress_increment_to_temperature,
-          double *volumetric_heat_generation_to_strain,
-          double *volumetric_heat_generation_to_temperature,
-          double *strain_array, double *strain_increment_array,
-          double *step_time_and_total_time, double *time_increment,
-          double *temperature, double *temperature_increment,
-          double *predefined_field_vars_array,
-          double *predefined_field_vars_increment_array, char *material_name,
-          int *direct_stress_components_num,
-          int *engineering_shear_components_num,
-          int *stress_or_strain_array_size, int *solution_dependent_vars_num,
-          double *properties_array, int *properties_num,
-          double *coordinates_array, double *rotation_increment_matrix,
-          double *pnewdt, double *celent, double *begin_deformation_gradient,
-          double *end_deformation_gradient, int *element_number_ID,
-          int *integration_point_ID, int *layer_num_ID,
-          int *section_point_num_within_layer, int *current_step_info_array,
-          int *increment_num) {
+// todo : combine two signatures by comment
+void umat(
+    /* below variables need to be defined */
+    double *stress_array /* STRESS : stress tensor, must be updated*/,
+    double *solution_dependent_vars_array /* STATEV : SDVs */,
+    double *properties_matrix /* DDSDDE : Jacobian (constitutive model) */,
+    double *elastic_strain_energy_value /* SSE : elastic strain energy */,
+    double *plastic_dissipation_value /* SPD :plastic dissipation */,
+    double *creep_dissipation_value /* SCD : creep dissipation */,
+    /* below variables only in a full or coupled thermal stress analysis */
+    double *volumetric_heat_generation_rate_value /* RPL : heat per time */,
+    double *stress_increment_to_temperature /* DDSDDT : stress to temp */,
+    double *volumetric_heat_generation_to_strain /* DRPLDE : variation of RPL*/,
+    double *volumetric_heat_generation_to_temperature /* DRPLDT : variation*/,
+    /* below variables passed in for information */
+    double *strain_array /* STRAN : total strain tensor */,
+    double *strain_increment_array /* DSTRAN : strain increment */,
+    double *step_time_and_total_time /* TIME : time step and total time*/,
+    double *time_increment /* DTIME : time increment */,
+    double *temperature /* TEMP : temperature */,
+    double *temperature_increment /* DTEMP : increment of temperature */,
+    double *predefined_field_vars_array /* PREDEF : array of predefined field*/,
+    double *predefined_field_vars_increment_array /* DPRED : inc of PREDEF*/,
+    char *material_name /* CNAME : User-defined material name */,
+    /* NDI : number of direct stress components */
+    int *direct_stress_components_num /* NDI */,
+    /* NSHR : number of engineering shear stress components*/
+    int *engineering_shear_components_num /* NSHR */,
+    /* NTENS : size of the stress or strain component array */
+    int *stress_or_strain_array_size /* NTENS = NDI + NSHR */,
+    int *solution_dependent_vars_num /* NSTATV : number of SDV variables */,
+    /* PROPS : User-specified array of material constants*/
+    double *properties_array /* PROPS */,
+    int *properties_num /* NPROPS : User-defined consts number */,
+    double *coordinates_array /* COORDS: coordinates of this point */,
+    /* note : COORDS are current coordinates if geometric nonlinear is ON,
+       otherwise contains the original coordinates of the point */
+    double *rotation_increment_matrix /* DROT : rotation increment matrix */,
+    /* this info can be updated */
+    double *suggested_new_time_increment_ratio /* PNEWDT : suggested new dt*/,
+    /* below info may be used */
+    double *celent /* CELENT : characteristic element length */,
+    /* note : F has the dimension of 3 x 3 */
+    double *begin_deformation_gradient /* DFGRD0 : F at begin of increment*/,
+    double *end_deformation_gradient /* DFGRD1 : F at end of the increment*/,
+    int *element_no_ID /* NOEL : element number */,
+    int *integration_point_ID /* NPT : integration point number */,
+    int *layer_num_ID /* LAYER : layer number for composites */,
+    int *section_point_num_within_layer /* KSPT : point number with layer */,
+    /* JSTEP[0] : step number */
+    /* JSTEP[1] : procedure type key */
+    /* JSTEP[2] : NLGEOM = YES is 1, other is 0 */
+    /* JSTEP[3] : if current step is linear perturbation procedure */
+    int *current_step_info_array /* JSTEP : step info */,
+    int *increment_num /* KINC : increment number */) {
+  // print basic info for UMAT
+  UMATBasicInfo umat_basic_info =
+      create_UMAT_basic_info(element_no_ID, integration_point_ID,
+                             &current_step_info_array[0], increment_num);
+  print_UMAT_basic_info(&umat_basic_info);
+
   // elastic properties
   double E = properties_array[0];
   double nu = properties_array[1];
@@ -154,8 +217,7 @@ void umat(double *stress_array, double *solution_dependent_vars_array,
   stress_array[2] += properties_matrix[8] * strain_increment_array[2];
 
   // update SDVs info
-  CPS3CommInfo CPS3_comm_info =
-      comm_info[(long)element_number_ID - DUMMY_ELEMENT_DELTA_NUM];
+  CPS3CommInfo CPS3_comm_info = comm_info[(*element_no_ID) - ELEMENT_NUM];
   double *CPS3_info_double_malloc_array =
       CPS3_common_info_to_double_array_use_malloc(&CPS3_comm_info);
   for (int i = 0; i < COMM_INFO_ENTRY_NUM; ++i) {
@@ -165,3 +227,4 @@ void umat(double *stress_array, double *solution_dependent_vars_array,
 }
 
 #pragma clang diagnostic pop
+}

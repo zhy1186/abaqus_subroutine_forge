@@ -172,3 +172,99 @@ TEST(CPS3CommInfoTest, CPS3CommonInfoToDoubleArrayUseMalloc) {
   EXPECT_DOUBLE_EQ(double_array_info[21], (double)info.status);
   free(double_array_info);
 }
+
+TEST(UELInfoTest, UELBasicInfo) {
+  int element_dof_num = 1;
+  int solution_dependent_vars_num = 2;
+  int properties_num = 3;
+  int element_node_num = 4;
+  int element_type_ID = 5;
+  double current_step_time_and_total_time_values[2];
+  current_step_time_and_total_time_values[0] = 6.0;
+  current_step_time_and_total_time_values[1] = 7.0;
+  double time_increment_value = 8.0;
+  int current_step_num = 9;
+  int current_increment_num = 10;
+  int element_no_ID = 11;
+
+  UELBasicInfo uel_basic_info = create_UEL_basic_info(
+      &element_dof_num, &solution_dependent_vars_num, &properties_num,
+      &element_node_num, &element_type_ID,
+      current_step_time_and_total_time_values, &time_increment_value,
+      &current_step_num, &current_increment_num, &element_no_ID);
+
+  EXPECT_EQ(uel_basic_info.element_dof_num, element_dof_num);
+  EXPECT_EQ(uel_basic_info.solution_dependent_vars_num,
+            solution_dependent_vars_num);
+  EXPECT_EQ(uel_basic_info.properties_num, properties_num);
+  EXPECT_EQ(uel_basic_info.element_node_num, element_node_num);
+  EXPECT_EQ(uel_basic_info.element_type_ID, element_type_ID);
+  EXPECT_DOUBLE_EQ(uel_basic_info.current_step_time,
+                   current_step_time_and_total_time_values[0]);
+  EXPECT_DOUBLE_EQ(uel_basic_info.total_time,
+                   current_step_time_and_total_time_values[1]);
+  EXPECT_DOUBLE_EQ(uel_basic_info.time_increment_value, time_increment_value);
+  EXPECT_EQ(uel_basic_info.current_step_num, current_step_num);
+  EXPECT_EQ(uel_basic_info.current_increment_num, current_increment_num);
+  EXPECT_EQ(uel_basic_info.element_no_ID, element_no_ID);
+
+  print_UEL_basic_info(&uel_basic_info);
+}
+
+TEST(UELInfoTest, UELPassedInInfo) {
+  const int properties_num = 4;
+  double properties_array[4] = {1, 2, 3, 4};
+  const int element_dof_num = 6;
+  double original_coords_array[6] = {0, 1, 2, 3, 4, 5};
+  double displacement_array[6] = {6, 7, 8, 9, 10, 11};
+  UELPassedInInfo info = create_UEL_passed_in_info(
+      &properties_num, properties_array, &element_dof_num,
+      original_coords_array, displacement_array);
+
+  EXPECT_EQ(info.properties_num, properties_num);
+  for (int i = 1; i < properties_num; ++i) {
+    EXPECT_DOUBLE_EQ(info.properties_array[i], properties_array[i]);
+  }
+
+  EXPECT_EQ(info.element_dof_num, element_dof_num);
+  for (int i = 1; i < element_dof_num; ++i) {
+    EXPECT_DOUBLE_EQ(info.original_coords_array[i], original_coords_array[i]);
+    EXPECT_DOUBLE_EQ(info.displacement_array[i], displacement_array[i]);
+  }
+
+  print_UEL_passed_in_info(&info);
+}
+
+TEST(UELInfoTest, UELCriticalInfo) {
+  const int element_no_ID = 3;
+  const int element_type_ID = 2;
+  const int current_step_num = 1;
+  const int current_increment_num = 42;
+
+  UELCriticalInfo info =
+      create_UEL_critical_info(&element_no_ID, &element_type_ID,
+                               &current_step_num, &current_increment_num);
+
+  EXPECT_EQ(info.element_no_ID, element_no_ID);
+  EXPECT_EQ(info.element_type_ID, element_type_ID);
+  EXPECT_EQ(info.current_step_num, current_step_num);
+  EXPECT_EQ(info.current_increment_num, current_increment_num);
+
+  print_UEL_critical_info(&info);
+}
+
+TEST(UMATInfoTest, UMATBasicInfo) {
+  const int element_no_ID = 1;
+  const int integration_point_ID = 2;
+  const int step_number = 3;
+  const int increment_number = 42;
+
+  UMATBasicInfo info = create_UMAT_basic_info(
+      &element_no_ID, &integration_point_ID, &step_number, &increment_number);
+  EXPECT_EQ(info.element_no_ID, element_no_ID);
+  EXPECT_EQ(info.integration_point_ID, integration_point_ID);
+  EXPECT_EQ(info.step_number, step_number);
+  EXPECT_EQ(info.increment_number, increment_number);
+
+  print_UMAT_basic_info(&info);
+}
