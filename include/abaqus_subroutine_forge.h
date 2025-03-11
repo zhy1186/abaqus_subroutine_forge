@@ -7,6 +7,8 @@
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-deprecated-headers"
+#pragma ide diagnostic ignored "modernize-use-auto"
+#pragma ide diagnostic ignored "modernize-use-nullptr"
 
 // designed header-only for ABAQUS subroutine development
 #include <stdarg.h>
@@ -17,7 +19,7 @@
 #define DIMENSION3 3
 #define DIMENSION_CPS3 6
 
-#define ZERO_TOLERANCE 1e-20
+#define ZERO_TOLERANCE 1e-15
 
 typedef enum {
   Matrix2X2,
@@ -297,6 +299,16 @@ double matrix_6D_get_element(const Matrix6D* mat, int row, int col) {
   return mat->data[row][col];
 }
 
+void matrix_6D_fill_abaqus_double_array(const Matrix6D* mat, double* dst) {
+  // i loops over rows
+  for (int i = 0; i < DIMENSION_CPS3; ++i) {
+    // j loops over cols
+    for (int j = 0; j < DIMENSION_CPS3; ++j) {
+      dst[i * DIMENSION_CPS3 + j] = matrix_6D_get_element(mat, i, j);
+    }
+  }
+}
+
 // Vector 6 x 1 used by CPS3NodalInfo
 typedef struct Vector6D {
   MatrixType type;
@@ -323,6 +335,12 @@ Vector6D create_vector_6D(double ele11, double ele21, double ele31,
 }
 
 Vector6D create_empty_vector_6D() { return create_vector_6D(0, 0, 0, 0, 0, 0); }
+
+void vector_6D_fill_abaqus_double_array(const Vector6D* vec, double* dst) {
+  for (int i = 0; i < DIMENSION_CPS3; ++i) {
+    dst[i] = vector_6D_get_element(vec, i);
+  }
+}
 
 // Mathematica matrix operator (transpose add minus num_mul)
 // Avoid use loop to be brief as to low dimension (<=3)
@@ -570,7 +588,8 @@ Matrix3D matrix_3D_inverse(const Matrix3D* mat) {
 
 // voigt vector and matrix transform
 Vector3D voigt_2D_matrix_to_3D_vector(const Matrix2D* mat) {
-  if (mat->data[0][1] != mat->data[1][0]) {
+  double sym_delta = mat->data[0][1] - mat->data[1][0];
+  if (sym_delta > ZERO_TOLERANCE || sym_delta < -ZERO_TOLERANCE) {
     fatal_error("FATAL: only symmetric matrix can use voigt transformation.");
   }
 
@@ -694,10 +713,43 @@ Matrix2D CPS3_2D_F_to_2D_E(const Matrix2D* F) {
   return E;
 }
 
+Matrix2D CPS3_tensor_strain_to_engineering_strain(
+    const Matrix2D* tensor_strain) {
+  return create_matrix_2D(matrix_2D_get_element(tensor_strain, 0, 0),
+                          2 * matrix_2D_get_element(tensor_strain, 0, 1),
+                          2 * matrix_2D_get_element(tensor_strain, 1, 0),
+                          matrix_2D_get_element(tensor_strain, 1, 1));
+}
+
 Matrix2D CPS3_2D_E_to_2D_T(const Matrix2D* E, const Matrix3D* property) {
   Vector3D vector_E = voigt_2D_matrix_to_3D_vector(E);
   Vector3D T = matrix_3D_mul_vector_3D(property, &vector_E);
   return voigt_3D_vector_to_2D_matrix(&T);
+}
+
+Matrix2D CPS3_T_and_F_to_Cauchy(const Matrix2D* T, const Matrix2D* F) {
+  double J = matrix_2D_determinant(F);
+  Matrix2D FT = matrix_2D_transpose(F);
+  Matrix2D F_times_T = matrix_2D_mul_matrix_2D(F, T);
+  Matrix2D F_times_T_times_FT = matrix_2D_mul_matrix_2D(&F_times_T, &FT);
+  Matrix2D sigma =
+      matrix_2D_number_multiplication((1 / J), &F_times_T_times_FT);
+  return sigma;
+}
+
+double CPS3_E_and_T_to_strain_energy_density(const Matrix2D* E,
+                                             const Matrix2D* T) {
+  double E11 = matrix_2D_get_element(E, 0, 0),
+         E12 = matrix_2D_get_element(E, 0, 1),
+         E21 = matrix_2D_get_element(E, 1, 0),
+         E22 = matrix_2D_get_element(E, 1, 1);
+  double T11 = matrix_2D_get_element(T, 0, 0),
+         T12 = matrix_2D_get_element(T, 0, 1),
+         T21 = matrix_2D_get_element(T, 1, 0),
+         T22 = matrix_2D_get_element(T, 1, 1);
+  double strain_energy_density =
+      0.5 * (T11 * E11 + T12 * E12 + T21 * E21 + T22 * E22);
+  return strain_energy_density;
 }
 
 // CPS3 stiffness matrix operator
@@ -771,6 +823,19 @@ Vector6D CPS3_matrix_B63_mul_vector_3D(const MatrixB63* mat,
   return result;
 }
 
+Matrix6D CPS3_compute_initial_element_stiffness_matrix(
+    const CPS3NodalInfo* X1Y1X2Y2X3Y3, const Matrix3D* property,
+    double initial_volume) {
+  MatrixB36 B = CPS3_compute_matrix_B(X1Y1X2Y2X3Y3);
+  MatrixB63 B_T = create_matrix_B63_from_B36(&B);
+  MatrixB63 BT_times_D = CPS3_matrixB63_mul_matrix_3D(&B_T, property);
+  Matrix6D BT_times_D_times_B = CPS3_matrixB63_mul_matrix_B36(&BT_times_D, &B);
+  Matrix6D K =
+      CPS3_matrix_6D_multiplication(initial_volume, &BT_times_D_times_B);
+  return K;
+}
+
+// todo : impl gtest
 CPS3NodalInfo CPS3_compute_inner_force(const CPS3NodalInfo* X1Y1X2Y2X3Y3,
                                        const CPS3NodalInfo* u1v1u2v2u3v3,
                                        const Matrix3D* property,
@@ -781,16 +846,25 @@ CPS3NodalInfo CPS3_compute_inner_force(const CPS3NodalInfo* X1Y1X2Y2X3Y3,
 
   double a = compute_CPS3_element_square(x1y1x2y2x3y3);
   double v = a * current_thickness;
-  MatrixB36 B = CPS3_compute_matrix_B(X1Y1X2Y2X3Y3);
+  MatrixB36 B = CPS3_compute_matrix_B(x1y1x2y2x3y3);
   Matrix2D F = CPS3_nodal_disp_to_2D_F(X1Y1X2Y2X3Y3, u1v1u2v2u3v3);
-  Matrix2D E = CPS3_2D_F_to_2D_E(&F);
-  Matrix2D T = CPS3_2D_E_to_2D_T(&E, property);
-  Vector3D T_voigt = voigt_2D_matrix_to_3D_vector(&T);
-  MatrixB63 B_T = create_matrix_B63_from_B36(&B);
-  Vector6D BT_times_T = CPS3_matrix_B63_mul_vector_3D(&B_T, &T_voigt);
-  Vector6D f_inner = vector_6D_number_multiplication(v, &BT_times_T);
+  Matrix2D E_tensor = CPS3_2D_F_to_2D_E(&F);
+  Matrix2D E_engineering = CPS3_tensor_strain_to_engineering_strain(&E_tensor);
 
-  return vector_6D_to_CPS3_nodal_info(&f_inner);
+  Matrix2D T = CPS3_2D_E_to_2D_T(&E_engineering, property);
+  Vector3D T_voigt = voigt_2D_matrix_to_3D_vector(&T);
+  Matrix2D sigma = CPS3_T_and_F_to_Cauchy(&T, &F);
+  Vector3D sigma_voigt = voigt_2D_matrix_to_3D_vector(&sigma);
+
+  // use sigma to compute inner force not T
+  MatrixB63 B_T = create_matrix_B63_from_B36(&B);
+  Vector6D BT_times_sigma = CPS3_matrix_B63_mul_vector_3D(&B_T, &sigma_voigt);
+  Vector6D BT_times_T = CPS3_matrix_B63_mul_vector_3D(&B_T, &T_voigt);
+  Vector6D f_inner_use_T = vector_6D_number_multiplication(v, &BT_times_T);
+  Vector6D f_inner_use_sigma =
+      vector_6D_number_multiplication(v, &BT_times_sigma);
+
+  return vector_6D_to_CPS3_nodal_info(&f_inner_use_sigma);
 }
 
 #pragma clang diagnostic pop

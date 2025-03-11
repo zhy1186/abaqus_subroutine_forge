@@ -47,7 +47,7 @@ TEST(MechanicsTest, CPS3NodalInfoAddCPS3NodalInfo) {
   CPS3NodalInfo res = CPS3_nodal_info_add(&info1, &info2);
   Vector6D res_vec = CPS3_nodal_info_to_vector_6D(&res);
   Eigen::Vector<double, 6> expect;
-  expect << 8,10,12,14,16,18;
+  expect << 8, 10, 12, 14, 16, 18;
   EXPECT_TRUE(to_eigen(res_vec).isApprox(expect, MECHANICS_TOLERANCE));
 }
 
@@ -108,6 +108,17 @@ TEST(MechanicsTest, CPS3FToE) {
   EXPECT_TRUE(is_matrix_2d_close(&E, &res));
 }
 
+// CPS3_tensor_strain_to_engineering_strain
+TEST(MechanicsTest, CPS3TensorStrainToEngineeringStrain) {
+  Matrix2D tensor_strain = create_matrix_2D(1, 2, 3, 4);
+  Matrix2D engineering_strain =
+      CPS3_tensor_strain_to_engineering_strain(&tensor_strain);
+  Eigen::Matrix2d expect;
+  expect << 1, 4, 6, 4;
+
+  EXPECT_TRUE(expect == to_eigen(engineering_strain));
+}
+
 // CPS3_2D_E_to_2D_T
 TEST(MechanicsTest, CPS3EToT) {
   Matrix2D E = create_matrix_2D(-0.0698147121315278, -0.0191921194714194,
@@ -119,6 +130,27 @@ TEST(MechanicsTest, CPS3EToT) {
       to_eigen(property) * to_eigen(voigt_2D_matrix_to_3D_vector(&E));
 
   EXPECT_TRUE(to_eigen(T_vector).isApprox(res, MECHANICS_TOLERANCE));
+}
+
+// CPS3_T_and_F_to_Cauchy
+TEST(MechanicsTest, CPS3TAndFToCauchy) {
+  Matrix2D F = create_matrix_2D(1, 2, 3, 4);
+  Matrix2D T = create_matrix_2D(5, 6, 7, 8);
+  Matrix2D sigma = CPS3_T_and_F_to_Cauchy(&T, &F);
+
+  EXPECT_DOUBLE_EQ(matrix_2D_get_element(&sigma, 0, 0), -31.5);
+  EXPECT_DOUBLE_EQ(matrix_2D_get_element(&sigma, 0, 1), -72.5);
+  EXPECT_DOUBLE_EQ(matrix_2D_get_element(&sigma, 1, 0), -71.5);
+  EXPECT_DOUBLE_EQ(matrix_2D_get_element(&sigma, 1, 1), -164.5);
+}
+
+// CPS3_E_and_T_to_strain_energy_density
+TEST(MechanicsTest, CPS3EAndTToStaainEnergyDensity) {
+  Matrix2D E = create_matrix_2D(1, 2, 3, 4);
+  Matrix2D T = create_matrix_2D(5, 6, 7, 8);
+  double strain_energy_density = CPS3_E_and_T_to_strain_energy_density(&E, &T);
+
+  EXPECT_DOUBLE_EQ(strain_energy_density, 35);
 }
 
 // CPS3_compute_matrix_B
@@ -248,4 +280,48 @@ TEST(MechanicsTest, CPS3MatrixB63MulVector3D) {
   Eigen::Matrix<double, 6, 1> expect = mat_eigen * vec_eigen;
 
   EXPECT_TRUE(actual.isApprox(expect, MECHANICS_TOLERANCE));
+}
+
+TEST(MechanicsTest, CPS3InitialStiffnessMatrix) {
+  CPS3NodalInfo X1Y1X2Y2X3Y3 = {7.8, 9.1, 5.67, 12.34, 1.23, 4.56};
+  Matrix3D property =
+      create_matrix_3D(196.489, 2.9621, 0, 2.9621, 9.8738, 0, 0, 0, 2.8451);
+  double thickness = 1.05;
+  double initial_area = compute_CPS3_element_square(&X1Y1X2Y2X3Y3);
+  double initial_volume = initial_area * thickness;
+  Matrix6D K = CPS3_compute_initial_element_stiffness_matrix(
+      &X1Y1X2Y2X3Y3, &property, initial_volume);
+  Eigen::Matrix<double, 6, 6> expect;
+  expect << 202.64745531718, -3.4019645733114, -119.10686057069,
+      3.5403106186161, -83.540594746487, -.13834604530478, -3.4019645733114,
+      6.2215390581452, 3.4788856186161, -6.5888965454986, -.76921045304779E-01,
+      0.36735748735342, -119.10686057069, 3.4788856186161, 70.765887939069,
+      -2.9375714728171, 48.340972631626, -.54131414579901, 3.5403106186161,
+      -6.5888965454986, -2.9375714728171, 8.2224672193526, -.60273914579901,
+      -1.6335706738541, -83.540594746487, -.76921045304779E-01, 48.340972631626,
+      -.60273914579901, 35.199622114861, 0.67966019110379, -.13834604530478,
+      0.36735748735342, -.54131414579901, -1.6335706738541, 0.67966019110379,
+      1.2662131865006;
+  EXPECT_TRUE(to_eigen(K).isApprox(expect, MECHANICS_TOLERANCE));
+}
+
+TEST(MechanicsTest, CPS3ComputeInnerForce) {
+  CPS3NodalInfo X1Y1X2Y2X3Y3 = {7.8, 9.1, 5.67, 12.34, 1.23, 4.56};
+  CPS3NodalInfo u1v1u2v2u3v3 = {-4.16364e-2, -2.35390e-2, 0, 0, -9.86607e-2, 0};
+  CPS3NodalInfo x1y1x2y2x3y3 =
+      CPS3_nodal_info_add(&X1Y1X2Y2X3Y3, &u1v1u2v2u3v3);
+  Matrix3D property =
+      create_matrix_3D(196.489, 2.9621, 0, 2.9621, 9.8738, 0, 0, 0, 2.8451);
+  double thickness = 1.05;
+  double initial_area = compute_CPS3_element_square(&X1Y1X2Y2X3Y3);
+  double initial_volume = initial_area * thickness;
+  double current_area = compute_CPS3_element_square(&x1y1x2y2x3y3);
+  double current_thickness = initial_volume / current_area;
+  CPS3NodalInfo inner_force = CPS3_compute_inner_force(
+      &X1Y1X2Y2X3Y3, &u1v1u2v2u3v3, &property, current_thickness);
+
+  double error_tolerance = 0.01;
+  EXPECT_NEAR(inner_force.node1_dof1, -0.1, 0.1 * error_tolerance);
+  EXPECT_NEAR(inner_force.node1_dof2, 0.001, 0.001 * error_tolerance);
+  EXPECT_NEAR(inner_force.node3_dof1, 0.0002, 0.0002 * error_tolerance * 10);
 }

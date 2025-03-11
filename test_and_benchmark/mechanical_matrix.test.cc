@@ -309,6 +309,23 @@ TEST(MechanicalMatrixTest, Matrix6DGetElement) {
   EXPECT_DOUBLE_EQ(matrix_6D_get_element(&mat, 5, 5), 36.0);
 }
 
+TEST(MechanicalMatrixTest, Matrix6DFillAbaqusDoubleArray) {
+  Matrix6D mat = create_matrix_6D(
+      1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0,
+      15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0,
+      27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0);
+  auto *dst = (double *)malloc(DIMENSION_CPS3 * DIMENSION3 * sizeof(double));
+  if (dst != nullptr) {
+    matrix_6D_fill_abaqus_double_array(&mat, dst);
+    for (int i = 0; i < (DIMENSION_CPS3 * DIMENSION_CPS3); ++i) {
+      EXPECT_DOUBLE_EQ(dst[i], i + 1);
+    }
+    free(dst);
+  } else {
+    FAIL() << "malloc failed.";
+  }
+}
+
 TEST(MechanicalMatrixTest, Matrix6DGetElementOutOfBound) {
   Matrix6D mat = create_empty_matrix_6D();
 
@@ -355,4 +372,22 @@ TEST(VectorTest, Vector6DGetElementOutOfBounds) {
 
   EXPECT_DEATH(vector_6D_get_element(&mat, 6),
                "FATAL: Index out of bounds \\(row: 6\\)!");
+}
+
+TEST(VectorTest, Vector6DFillAbaqusDoubleArray) {
+  Vector6D vec = create_vector_6D(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+  auto *dst = (double *)malloc(DIMENSION_CPS3 * sizeof(double));
+  if (dst != nullptr) {
+    vector_6D_fill_abaqus_double_array(&vec, dst);
+
+    EXPECT_DOUBLE_EQ(dst[0], 1.0);
+    EXPECT_DOUBLE_EQ(dst[1], 2.0);
+    EXPECT_DOUBLE_EQ(dst[2], 3.0);
+    EXPECT_DOUBLE_EQ(dst[3], 4.0);
+    EXPECT_DOUBLE_EQ(dst[4], 5.0);
+    EXPECT_DOUBLE_EQ(dst[5], 6.0);
+    free(dst);
+  } else {
+    fatal_error("malloc failed !");
+  }
 }

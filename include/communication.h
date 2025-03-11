@@ -9,7 +9,7 @@
 
 #include "abaqus_subroutine_forge.h"
 
-#define COMM_INFO_NUM 22
+#define COMM_INFO_ENTRY_NUM 22
 
 // design for easy-to-use for damn ABAQUS, not for elegance
 
@@ -170,7 +170,7 @@ double* CPS3_common_info_to_double_array_use_malloc(const CPS3CommInfo* info) {
     fatal_error("CPS3CommInfo do not contain valid info!");
   }
 
-  double* rtn = (double*)malloc(COMM_INFO_NUM * sizeof(double));
+  double* rtn = (double*)malloc(COMM_INFO_ENTRY_NUM * sizeof(double));
   rtn[0] = info->F11;
   rtn[1] = info->F12;
   rtn[2] = info->F21;
