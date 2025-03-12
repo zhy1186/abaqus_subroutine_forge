@@ -1,5 +1,3 @@
-// warning : only valid for one-step calculation !
-
 extern "C" {
 
 #include "abaqus_subroutine_forge.h"
@@ -85,41 +83,21 @@ void uel(
   double u1 = displacement_array[0], v1 = displacement_array[1],
          u2 = displacement_array[2], v2 = displacement_array[3],
          u3 = displacement_array[4], v3 = displacement_array[5];
-  double C11 = properties_array[0], C12 = properties_array[1],
-         C13 = properties_array[2], C21 = properties_array[3],
-         C22 = properties_array[4], C23 = properties_array[5],
-         C31 = properties_array[6], C32 = properties_array[7],
-         C33 = properties_array[8];
+  double Y = properties_array[0];
+  double nu = properties_array[1];
+  Matrix3D C = create_matrix_3D(Y / (1 - nu * nu), (Y * nu) / (1 - nu * nu), 0,
+                                (Y * nu) / (1 - nu * nu), Y / (1 - nu * nu), 0,
+                                0, 0, (Y * (1 - nu)) / (2 * (1 - nu * nu)));
   double initial_thickness = properties_array[9];
   CPS3NodalInfo X1Y1X2Y2X3Y3 = create_CPS3_nodal_info(X1, Y1, X2, Y2, X3, Y3);
   CPS3NodalInfo u1v1u2v2u3v3 = create_CPS3_nodal_info(u1, v1, u2, v2, u3, v3);
   CPS3NodalInfo x1y1x2y2x3y3 =
       CPS3_nodal_info_add(&X1Y1X2Y2X3Y3, &u1v1u2v2u3v3);
-  Matrix3D C = create_matrix_3D(C11, C12, C13, C21, C22, C23, C31, C32, C33);
-
   // compute mechanical variables
   Matrix2D F = CPS3_nodal_disp_to_2D_F(&X1Y1X2Y2X3Y3, &u1v1u2v2u3v3);
-  double F11 = matrix_2D_get_element(&F, 0, 0);
-  double F12 = matrix_2D_get_element(&F, 0, 1);
-  double F21 = matrix_2D_get_element(&F, 1, 0);
-  double F22 = matrix_2D_get_element(&F, 1, 1);
-  Matrix2D Ft_mid = create_matrix_2D(1 + (F11 - 1) * 0.5, F12 * 0.5, F21 * 0.5,
-                                     1 + (F22 - 1) * 0.5);
-  Matrix2D Ft_mid_inv = matrix_2D_inverse(&Ft_mid);
-  Matrix2D I = create_eye_matrix_2D();
-  Matrix2D F_point = matrix_2D_minus(&Ft_mid, &I);
-  Matrix2D Gamma = matrix_2D_mul_matrix_2D(&F_point, &Ft_mid_inv);
-  Matrix2D GammaT = matrix_2D_transpose(&Gamma);
-  Matrix2D deformation_rate_D_times_2 = matrix_2D_add(&Gamma, &GammaT);
-  Matrix2D deformation_rate_D =
-      matrix_2D_number_multiplication(0.5, &deformation_rate_D_times_2);
-  double D11 = matrix_2D_get_element(&deformation_rate_D, 0, 0);
-  double D12 = matrix_2D_get_element(&deformation_rate_D, 0, 1);
-  double D21 = matrix_2D_get_element(&deformation_rate_D, 1, 0);
-  double D22 = matrix_2D_get_element(&deformation_rate_D, 1, 1);
-  Matrix2D strain = create_matrix_2D(2 * D11, 2 * D12, 2 * D21, 2 * D22);
-  Matrix2D stress = CPS3_2D_E_to_2D_T(&strain, &C);
-  Matrix2D sigma = stress;
+  Matrix2D E = CPS3_2D_F_to_2D_E(&F);
+  Matrix2D T = CPS3_2D_E_to_2D_T(&E, &C);
+  Matrix2D sigma = CPS3_T_and_F_to_Cauchy(&T, &F);
   Matrix6D K = CPS3_compute_initial_element_stiffness_matrix(&X1Y1X2Y2X3Y3, &C,
                                                              initial_thickness);
   matrix_6D_fill_abaqus_double_array(&K, element_stiffness_matrix);
@@ -134,26 +112,23 @@ void uel(
                                      abaqus_residual_force_array);
 
   // fill in volume energy info
-  double strain_energy_density =
-      CPS3_E_and_T_to_strain_energy_density(&strain, &stress);
+  double strain_energy_density = CPS3_E_and_T_to_strain_energy_density(&E, &T);
   CPS3VolumeEnergyInfo volume_energy_info = create_CPS3_volume_energy_info(
       current_area, current_thickness, strain_energy_density);
   // update energy info to ABAQUS
-  // todo : energy(8) (distributed work done) is not update for
-  // now.
+  // todo : energy(8) (distributed work done) is not update for now.
   energy_array[0] = 0;  // kinetic energy
   energy_array[1] = strain_energy_density * current_area * current_thickness;
 
   // transfer info to umat for post-processing ODB results
   CPS3CommInfo element_comm_info = create_empty_CPS3_common_info();
   element_comm_info = create_CPS3_common_info_from_matrix_2Ds(
-      ContainInfo, &F, &strain, &stress, &sigma, volume_energy_info);
+      ContainInfo, &F, &E, &T, &sigma, volume_energy_info);
   comm_info[*element_no_ID] = element_comm_info;
   clear_CPS3_common_info(&element_comm_info);
 }
 
 // only used for dummy element properties for viewing ODB results
-// todo : combine two signatures by comment
 void umat(
     /* below variables need to be defined */
     double *stress_array /* STRESS : stress tensor, must be updated */,

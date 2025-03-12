@@ -131,7 +131,6 @@ void uel(
 }
 
 // only used for dummy element properties for viewing ODB results
-// todo : combine two signatures by comment
 void umat(
     /* below variables need to be defined */
     double *stress_array /* STRESS : stress tensor, must be updated */,
