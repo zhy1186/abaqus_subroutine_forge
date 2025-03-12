@@ -118,20 +118,23 @@ void uel(
   double D21 = matrix_2D_get_element(&deformation_rate_D, 1, 0);
   double D22 = matrix_2D_get_element(&deformation_rate_D, 1, 1);
   Matrix2D strain = create_matrix_2D(2 * D11, 2 * D12, 2 * D21, 2 * D22);
-  Matrix2D stress = CPS3_2D_E_to_2D_T(&strain, &C);
-  Matrix2D sigma = stress;
+  Matrix2D stress = CPS3_2D_strain_to_2D_stress(&strain, &C);
+  Vector3D sigma_voigt = voigt_2D_matrix_to_3D_vector(&stress);
   Matrix6D K = CPS3_compute_initial_element_stiffness_matrix(&X1Y1X2Y2X3Y3, &C,
                                                              initial_thickness);
   matrix_6D_fill_abaqus_double_array(&K, element_stiffness_matrix);
 
   double current_area = compute_CPS3_element_square(&x1y1x2y2x3y3);
   double current_thickness = initial_thickness / current_area;
-  CPS3NodalInfo inner_force = CPS3_compute_inner_force(
-      &X1Y1X2Y2X3Y3, &u1v1u2v2u3v3, &C, current_thickness);
-  Vector6D inner_force_vec = CPS3_nodal_info_to_vector_6D(&inner_force);
-  inner_force_vec = vector_6D_number_multiplication(-1, &inner_force_vec);
-  vector_6D_fill_abaqus_double_array(&inner_force_vec,
-                                     abaqus_residual_force_array);
+  double current_volume = current_area * current_thickness;
+  MatrixB36 B = CPS3_compute_matrix_B(&x1y1x2y2x3y3);
+  MatrixB63 B_T = create_matrix_B63_from_B36(&B);
+  Vector6D BT_times_sigma = CPS3_matrix_B63_mul_vector_3D(&B_T, &sigma_voigt);
+  Vector6D inner_force =
+      vector_6D_number_multiplication(current_volume, &BT_times_sigma);
+
+  inner_force = vector_6D_number_multiplication(-1, &inner_force);
+  vector_6D_fill_abaqus_double_array(&inner_force, abaqus_residual_force_array);
 
   // fill in volume energy info
   double strain_energy_density =
@@ -147,7 +150,7 @@ void uel(
   // transfer info to umat for post-processing ODB results
   CPS3CommInfo element_comm_info = create_empty_CPS3_common_info();
   element_comm_info = create_CPS3_common_info_from_matrix_2Ds(
-      ContainInfo, &F, &strain, &stress, &sigma, volume_energy_info);
+      ContainInfo, &F, &strain, &stress, &stress, volume_energy_info);
   comm_info[*element_no_ID] = element_comm_info;
   clear_CPS3_common_info(&element_comm_info);
 }

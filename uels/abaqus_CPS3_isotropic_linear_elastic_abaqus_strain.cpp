@@ -90,7 +90,7 @@ void uel(
   Matrix3D C = create_matrix_3D(Y / (1 - nu * nu), (Y * nu) / (1 - nu * nu), 0,
                                 (Y * nu) / (1 - nu * nu), Y / (1 - nu * nu), 0,
                                 0, 0, (Y * (1 - nu)) / (2 * (1 - nu * nu)));
-  double initial_thickness = properties_array[9];
+  double initial_thickness = properties_array[2];
   CPS3NodalInfo X1Y1X2Y2X3Y3 = create_CPS3_nodal_info(X1, Y1, X2, Y2, X3, Y3);
   CPS3NodalInfo u1v1u2v2u3v3 = create_CPS3_nodal_info(u1, v1, u2, v2, u3, v3);
   CPS3NodalInfo x1y1x2y2x3y3 =
@@ -117,7 +117,7 @@ void uel(
   double D21 = matrix_2D_get_element(&deformation_rate_D, 1, 0);
   double D22 = matrix_2D_get_element(&deformation_rate_D, 1, 1);
   Matrix2D strain = create_matrix_2D(2 * D11, 2 * D12, 2 * D21, 2 * D22);
-  Matrix2D stress = CPS3_2D_E_to_2D_T(&strain, &C);
+  Matrix2D stress = CPS3_2D_strain_to_2D_stress(&strain, &C);
   Matrix2D sigma = stress;
   Matrix6D K = CPS3_compute_initial_element_stiffness_matrix(&X1Y1X2Y2X3Y3, &C,
                                                              initial_thickness);
@@ -125,7 +125,7 @@ void uel(
 
   double current_area = compute_CPS3_element_square(&x1y1x2y2x3y3);
   double current_thickness = initial_thickness / current_area;
-  CPS3NodalInfo inner_force = CPS3_compute_inner_force(
+  CPS3NodalInfo inner_force = CPS3_compute_inner_force_use_E_and_T(
       &X1Y1X2Y2X3Y3, &u1v1u2v2u3v3, &C, current_thickness);
   Vector6D inner_force_vec = CPS3_nodal_info_to_vector_6D(&inner_force);
   inner_force_vec = vector_6D_number_multiplication(-1, &inner_force_vec);
