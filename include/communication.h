@@ -364,7 +364,7 @@ UMATBasicInfo create_UMAT_basic_info(const int *element_no_ID,
 void print_UMAT_basic_info(const UMATBasicInfo *info) {
   log_info(
       "UMAT called by element no. [%d], integration point no. [%d], in step "
-      "[%d], increment [%d]",
+      "[%d], increment [%d]\n",
       info->element_no_ID, info->integration_point_ID, info->step_number,
       info->increment_number);
 }

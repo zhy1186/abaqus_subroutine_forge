@@ -12,6 +12,8 @@ The library includes functionalities such as matrix creation, vector creation, e
 Copy `abaqus_subroutine_forge.h` into your project directory and include it in your ABAQUS UEL subroutine as follows:
 ```c
 #include "abaqus_subroutine_forge.h"
+// if you need to share information between UEL and UMAT
+#include "communication.h" 
 ```
 
 ### 2. Compile with ABAQUS
@@ -113,7 +115,7 @@ int main() {
 
 ## License and Contact
 - Created by **Hengyi Zhao (zhaohy19@mails.tsinghua.edu.cn)**
-- Version: **1.0.0**
+- Version: **1.1.0**
 - Designed for ABAQUS user-defined element (UEL) subroutine development.
 
 This document serves as a technical reference for using the ABAQUS Subroutine Forge library in UEL subroutines. If you have any questions or require modifications, please contact the author.
