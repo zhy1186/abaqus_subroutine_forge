@@ -1,2 +1,3 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
-add_library(abaqus_CPS3_try abaqus_CPS3_try.cpp)
+add_library(abaqus_CPS3_green_strain abaqus_CPS3_green_strain.cpp)
+add_library(abaqus_CPS3_abaqus_strain abaqus_CPS3_abaqus_strain.cpp)
