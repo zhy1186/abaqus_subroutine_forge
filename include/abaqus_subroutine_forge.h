@@ -808,7 +808,8 @@ Matrix2D CPS3_tensor_strain_to_engineering_strain(
                           matrix_2D_get_element(tensor_strain, 1, 1));
 }
 
-Matrix2D CPS3_2D_E_to_2D_T(const Matrix2D* E, const Matrix3D* property) {
+Matrix2D CPS3_2D_strain_to_2D_stress(const Matrix2D* E,
+                                     const Matrix3D* property) {
   Vector3D vector_E = voigt_2D_matrix_to_3D_vector(E);
   Vector3D T = matrix_3D_mul_vector_3D(property, &vector_E);
   return voigt_3D_vector_to_2D_matrix(&T);
@@ -922,10 +923,11 @@ Matrix6D CPS3_compute_initial_element_stiffness_matrix(
   return K;
 }
 
-CPS3NodalInfo CPS3_compute_inner_force(const CPS3NodalInfo* X1Y1X2Y2X3Y3,
-                                       const CPS3NodalInfo* u1v1u2v2u3v3,
-                                       const Matrix3D* property,
-                                       double current_thickness) {
+CPS3NodalInfo CPS3_compute_inner_force_use_E_and_T(
+    const CPS3NodalInfo* X1Y1X2Y2X3Y3, const CPS3NodalInfo* u1v1u2v2u3v3,
+    const Matrix3D* property, double current_thickness) {
+  // Assume E * property = T
+  // other assumptions introduce different results
   CPS3NodalInfo x1y1x2y2x3y3_val =
       CPS3_nodal_info_add(X1Y1X2Y2X3Y3, u1v1u2v2u3v3);
   CPS3NodalInfo* x1y1x2y2x3y3 = &x1y1x2y2x3y3_val;  // make type same as X and u
@@ -937,7 +939,7 @@ CPS3NodalInfo CPS3_compute_inner_force(const CPS3NodalInfo* X1Y1X2Y2X3Y3,
   Matrix2D E_tensor = CPS3_2D_F_to_2D_E(&F);
   Matrix2D E_engineering = CPS3_tensor_strain_to_engineering_strain(&E_tensor);
 
-  Matrix2D T = CPS3_2D_E_to_2D_T(&E_engineering, property);
+  Matrix2D T = CPS3_2D_strain_to_2D_stress(&E_engineering, property);
   Vector3D T_voigt = voigt_2D_matrix_to_3D_vector(&T);
   Matrix2D sigma = CPS3_T_and_F_to_Cauchy(&T, &F);
   Vector3D sigma_voigt = voigt_2D_matrix_to_3D_vector(&sigma);

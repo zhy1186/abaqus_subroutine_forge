@@ -119,12 +119,12 @@ TEST(MechanicsTest, CPS3TensorStrainToEngineeringStrain) {
   EXPECT_TRUE(expect == to_eigen(engineering_strain));
 }
 
-// CPS3_2D_E_to_2D_T
+// CPS3_2D_strain_to_2D_stress
 TEST(MechanicsTest, CPS3EToT) {
   Matrix2D E = create_matrix_2D(-0.0698147121315278, -0.0191921194714194,
                                 -0.0191921194714194, 0.425778102868695);
   Matrix3D property = create_matrix_3D(1, 2, 3, 4, 5, 6, 7, 8, 9);
-  Matrix2D T = CPS3_2D_E_to_2D_T(&E, &property);
+  Matrix2D T = CPS3_2D_strain_to_2D_stress(&E, &property);
   Vector3D T_vector = voigt_2D_matrix_to_3D_vector(&T);
   Eigen::Vector3d res =
       to_eigen(property) * to_eigen(voigt_2D_matrix_to_3D_vector(&E));
@@ -317,7 +317,7 @@ TEST(MechanicsTest, CPS3ComputeInnerForce) {
   double initial_volume = initial_area * thickness;
   double current_area = compute_CPS3_element_square(&x1y1x2y2x3y3);
   double current_thickness = initial_volume / current_area;
-  CPS3NodalInfo inner_force = CPS3_compute_inner_force(
+  CPS3NodalInfo inner_force = CPS3_compute_inner_force_use_E_and_T(
       &X1Y1X2Y2X3Y3, &u1v1u2v2u3v3, &property, current_thickness);
 
   double error_tolerance = 0.01;

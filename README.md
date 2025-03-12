@@ -67,8 +67,8 @@ This library provides numerous utility functions for matrix and vector manipulat
   - `compute_CPS3_element_square()`: Computes the element area.
   - `CPS3_nodal_disp_to_2D_F()`: Computes deformation gradient tensor F.
   - `CPS3_2D_F_to_2D_E()`: Computes strain tensor E from deformation gradient F.
-  - `CPS3_2D_E_to_2D_T()`: Computes the stress tensor from the strain tensor.
-  - `CPS3_compute_inner_force()`: Computes inner force for an element.
+  - `CPS3_2D_strain_to_2D_stress()`: Computes the stress tensor from the strain tensor.
+  - `CPS3_compute_inner_force_use_E_and_T()`: Computes inner force for an element.
 
 ### Stiffness Matrix Computation
 - **Matrix B for CPS3 Elements**
