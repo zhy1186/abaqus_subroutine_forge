@@ -176,7 +176,7 @@ void clear_CPS3_common_info(CPS3CommInfo *info) {
 // should only be used in dummy UMAT because of stack memory
 double *CPS3_common_info_to_double_array_use_malloc(const CPS3CommInfo *info) {
   if (info->status == InfoCleared || info->status == DefaultInitialized) {
-    fatal_error("CPS3CommInfo do not contain valid info!");
+    fatal_error("CPS3CommInfo do not contain valid info!\n");
   }
 
   double *rtn = (double *)malloc(COMM_INFO_ENTRY_NUM * sizeof(double));

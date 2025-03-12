@@ -94,7 +94,7 @@ void matrix_3D_print(const Matrix3D* mat) {
 
 double matrix_3D_get_element(const Matrix3D* mat, int row, int col) {
   if (col < 0 || col >= DIMENSION3 || row < 0 || row >= DIMENSION3) {
-    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!", row, col);
+    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!\n", row, col);
   }
   return mat->data[row][col];
 }
@@ -136,7 +136,7 @@ void vector_2D_print(const Vector2D* mat) {
 
 double vector_2D_get_element(const Vector2D* mat, int row) {
   if (row < 0 || row >= DIMENSION2) {
-    fatal_error("FATAL: Index out of bounds (row: %d)!", row);
+    fatal_error("FATAL: Index out of bounds (row: %d)!\n", row);
   }
   return mat->data[row];
 }
@@ -163,7 +163,7 @@ void vector_3D_print(const Vector3D* mat) {
 
 double vector_3D_get_element(const Vector3D* mat, int row) {
   if (row < 0 || row >= DIMENSION3) {
-    fatal_error("FATAL: Index out of bounds (row: %d)!", row);
+    fatal_error("FATAL: Index out of bounds (row: %d)!\n", row);
   }
   return mat->data[row];
 }
@@ -198,7 +198,7 @@ void matrix_B36_print(const MatrixB36* mat) {
 
 double matrix_B36_get_element(const MatrixB36* mat, int row, int col) {
   if (col < 0 || col >= DIMENSION_CPS3 || row < 0 || row >= DIMENSION3) {
-    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!", row, col);
+    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!\n", row, col);
   }
   return mat->data[row][col];
 }
@@ -255,7 +255,7 @@ void matrix_B63_print(const MatrixB63* mat) {
 
 double matrix_B63_get_element(const MatrixB63* mat, int row, int col) {
   if (col < 0 || col >= DIMENSION3 || row < 0 || row >= DIMENSION_CPS3) {
-    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!", row, col);
+    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!\n", row, col);
   }
   return mat->data[row][col];
 }
@@ -374,7 +374,7 @@ Matrix6D create_empty_matrix_6D() {
 
 double matrix_6D_get_element(const Matrix6D* mat, int row, int col) {
   if (col < 0 || col >= DIMENSION_CPS3 || row < 0 || row >= DIMENSION_CPS3) {
-    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!", row, col);
+    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!\n", row, col);
   }
   return mat->data[row][col];
 }
@@ -402,7 +402,7 @@ void vector_6D_print(const Vector6D* mat) {
 
 double vector_6D_get_element(const Vector6D* mat, int row) {
   if (row < 0 || row >= DIMENSION_CPS3) {
-    fatal_error("FATAL: Index out of bounds (row: %d)!", row);
+    fatal_error("FATAL: Index out of bounds (row: %d)!\n", row);
   }
   return mat->data[row];
 }
@@ -606,7 +606,7 @@ double matrix_2D_determinant(const Matrix2D* mat) {
 Matrix2D matrix_2D_inverse(const Matrix2D* mat) {
   double det = matrix_2D_determinant(mat);
   if (det < ZERO_TOLERANCE && det > -ZERO_TOLERANCE) {
-    fatal_error("FATAL: Matrix is singular and cannot be inverted. det = %f",
+    fatal_error("FATAL: Matrix is singular and cannot be inverted. det = %f\n",
                 det);
   }
 
@@ -631,7 +631,7 @@ double matrix_3D_determinant(const Matrix3D* mat) {
 Matrix3D matrix_3D_inverse(const Matrix3D* mat) {
   double det = matrix_3D_determinant(mat);
   if (det < ZERO_TOLERANCE && det > -ZERO_TOLERANCE) {
-    fatal_error("FATAL: Matrix is singular and cannot be inverted. det = %f",
+    fatal_error("FATAL: Matrix is singular and cannot be inverted. det = %f\n",
                 det);
   }
 
@@ -676,7 +676,7 @@ Matrix3D matrix_3D_inverse(const Matrix3D* mat) {
 Vector3D voigt_2D_matrix_to_3D_vector(const Matrix2D* mat) {
   double sym_delta = mat->data[0][1] - mat->data[1][0];
   if (sym_delta > ZERO_TOLERANCE || sym_delta < -ZERO_TOLERANCE) {
-    fatal_error("FATAL: only symmetric matrix can use voigt transformation.");
+    fatal_error("FATAL: only symmetric matrix can use voigt transformation.\n");
   }
 
   return create_vector_3D(mat->data[0][0], mat->data[1][1], mat->data[0][1]);
@@ -753,12 +753,12 @@ double compute_CPS3_element_square(const CPS3NodalInfo* coords) {
     print_CPS3_nodal_info(coords);
     fatal_error(
         "FATAL: node not in counter-clockwise arrangement while computing "
-        "square.");
+        "square.\n");
   }
 
   if (square == 0) {
     print_CPS3_nodal_info(coords);
-    fatal_error("FATAL: three nodes of element in one line, square = 0!");
+    fatal_error("FATAL: three nodes of element in one line, square = 0!\n");
   }
 
   return square;
