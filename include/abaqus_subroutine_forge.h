@@ -925,32 +925,28 @@ Matrix6D CPS3_compute_initial_element_stiffness_matrix(
 
 CPS3NodalInfo CPS3_compute_inner_force_use_E_and_T(
     const CPS3NodalInfo* X1Y1X2Y2X3Y3, const CPS3NodalInfo* u1v1u2v2u3v3,
-    const Matrix3D* property, double current_thickness) {
+    const Matrix3D* property, double initial_thickness) {
   // Assume E * property = T
   // other assumptions introduce different results
   CPS3NodalInfo x1y1x2y2x3y3_val =
       CPS3_nodal_info_add(X1Y1X2Y2X3Y3, u1v1u2v2u3v3);
   CPS3NodalInfo* x1y1x2y2x3y3 = &x1y1x2y2x3y3_val;  // make type same as X and u
 
-  double a = compute_CPS3_element_square(x1y1x2y2x3y3);
-  double v = a * current_thickness;
+  double current_area = compute_CPS3_element_square(x1y1x2y2x3y3);
   MatrixB36 B = CPS3_compute_matrix_B(x1y1x2y2x3y3);
   Matrix2D F = CPS3_nodal_disp_to_2D_F(X1Y1X2Y2X3Y3, u1v1u2v2u3v3);
   Matrix2D E_tensor = CPS3_2D_F_to_2D_E(&F);
   Matrix2D E_engineering = CPS3_tensor_strain_to_engineering_strain(&E_tensor);
 
   Matrix2D T = CPS3_2D_strain_to_2D_stress(&E_engineering, property);
-  Vector3D T_voigt = voigt_2D_matrix_to_3D_vector(&T);
   Matrix2D sigma = CPS3_T_and_F_to_Cauchy(&T, &F);
   Vector3D sigma_voigt = voigt_2D_matrix_to_3D_vector(&sigma);
 
   // use sigma to compute inner force not T
   MatrixB63 B_T = create_matrix_B63_from_B36(&B);
   Vector6D BT_times_sigma = CPS3_matrix_B63_mul_vector_3D(&B_T, &sigma_voigt);
-  Vector6D BT_times_T = CPS3_matrix_B63_mul_vector_3D(&B_T, &T_voigt);
-  Vector6D f_inner_use_T = vector_6D_number_multiplication(v, &BT_times_T);
-  Vector6D f_inner_use_sigma =
-      vector_6D_number_multiplication(v, &BT_times_sigma);
+  Vector6D f_inner_use_sigma = vector_6D_number_multiplication(
+      current_area * initial_thickness, &BT_times_sigma);
 
   return vector_6D_to_CPS3_nodal_info(&f_inner_use_sigma);
 }

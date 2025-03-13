@@ -126,12 +126,11 @@ void uel(
 
   double current_area = compute_CPS3_element_square(&x1y1x2y2x3y3);
   double current_thickness = initial_thickness / current_area;
-  double current_volume = current_area * current_thickness;
   MatrixB36 B = CPS3_compute_matrix_B(&x1y1x2y2x3y3);
   MatrixB63 B_T = create_matrix_B63_from_B36(&B);
   Vector6D BT_times_sigma = CPS3_matrix_B63_mul_vector_3D(&B_T, &sigma_voigt);
-  Vector6D inner_force =
-      vector_6D_number_multiplication(current_volume, &BT_times_sigma);
+  Vector6D inner_force = vector_6D_number_multiplication(
+      initial_thickness * current_area, &BT_times_sigma);
 
   inner_force = vector_6D_number_multiplication(-1, &inner_force);
   vector_6D_fill_abaqus_double_array(&inner_force, abaqus_residual_force_array);

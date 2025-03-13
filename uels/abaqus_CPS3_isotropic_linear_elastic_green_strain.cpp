@@ -105,7 +105,7 @@ void uel(
   double current_area = compute_CPS3_element_square(&x1y1x2y2x3y3);
   double current_thickness = initial_thickness / current_area;
   CPS3NodalInfo inner_force = CPS3_compute_inner_force_use_E_and_T(
-      &X1Y1X2Y2X3Y3, &u1v1u2v2u3v3, &C, current_thickness);
+      &X1Y1X2Y2X3Y3, &u1v1u2v2u3v3, &C, initial_thickness);
   Vector6D inner_force_vec = CPS3_nodal_info_to_vector_6D(&inner_force);
   inner_force_vec = vector_6D_number_multiplication(-1, &inner_force_vec);
   vector_6D_fill_abaqus_double_array(&inner_force_vec,
