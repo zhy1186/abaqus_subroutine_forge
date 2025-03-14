@@ -125,7 +125,8 @@ void uel(
   matrix_6D_fill_abaqus_double_array(&K, element_stiffness_matrix);
 
   double current_area = compute_CPS3_element_square(&x1y1x2y2x3y3);
-  double current_thickness = initial_thickness / current_area;
+  double initial_area = compute_CPS3_element_square(&X1Y1X2Y2X3Y3);
+  double current_thickness = initial_thickness * initial_area / current_area;
   MatrixB36 B = CPS3_compute_matrix_B(&x1y1x2y2x3y3);
   MatrixB63 B_T = create_matrix_B63_from_B36(&B);
   Vector6D BT_times_sigma = CPS3_matrix_B63_mul_vector_3D(&B_T, &sigma_voigt);
