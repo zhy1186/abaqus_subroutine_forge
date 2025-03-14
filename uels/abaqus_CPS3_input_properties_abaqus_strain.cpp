@@ -117,7 +117,7 @@ void uel(
   double D12 = matrix_2D_get_element(&deformation_rate_D, 0, 1);
   double D21 = matrix_2D_get_element(&deformation_rate_D, 1, 0);
   double D22 = matrix_2D_get_element(&deformation_rate_D, 1, 1);
-  Matrix2D strain = create_matrix_2D(2 * D11, 2 * D12, 2 * D21, 2 * D22);
+  Matrix2D strain = create_matrix_2D(2 * D11, 4 * D12, 4 * D21, 2 * D22);
   Matrix2D stress = CPS3_2D_strain_to_2D_stress(&strain, &C);
   Vector3D sigma_voigt = voigt_2D_matrix_to_3D_vector(&stress);
   Matrix6D K = CPS3_compute_initial_element_stiffness_matrix(&X1Y1X2Y2X3Y3, &C,
