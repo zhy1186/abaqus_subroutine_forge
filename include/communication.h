@@ -21,6 +21,18 @@ void log_info(const char *fmt, ...) {
   va_end(args);
 }
 
+void log_debug(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  fprintf(stderr,
+          "\n\n==================== DEBUG output ====================\n\n");
+  vfprintf(stderr, fmt, args);
+  fprintf(stderr,
+          "\n\n^^^^^^^^^^^^^^^^^^^^ ^^^^^ ^^^^^^ ^^^^^^^^^^^^^^^^^^^^\n\n");
+  fflush(stderr);
+  va_end(args);
+}
+
 typedef enum { DefaultInitialized, ContainInfo, InfoCleared } CPS3InfoStatus;
 
 typedef struct CPS3VolumeEnergyInfo {
