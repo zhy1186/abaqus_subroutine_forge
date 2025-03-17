@@ -33,6 +33,29 @@ void log_debug(const char *fmt, ...) {
   va_end(args);
 }
 
+typedef enum { TYPE_INT, TYPE_DOUBLE } DebugOutputArrayType;
+
+void log_debug_array(const char *name, DebugOutputArrayType type, int length,
+                     void *array) {
+  fprintf(stderr,
+          "\n\n==================== DEBUG output ====================\n\n");
+  fprintf(stderr, "array name : %s\n", name);
+  for (int i = 0; i < length; ++i) {
+    if (type == TYPE_DOUBLE) {
+      fprintf(stderr, "%s [%d] = %f\n", name, i, ((double *)array)[i]);
+    } else if (type == TYPE_INT) {
+      fprintf(stderr, "%s [%d] = %d\n", name, i, ((int *)array)[i]);
+    } else {
+      fatal_error("Unsupported array type : %d\n", type);
+    }
+  }
+  fprintf(stderr,
+          "\n\n^^^^^^^^^^^^^^^^^^^^ ^^^^^ ^^^^^^ ^^^^^^^^^^^^^^^^^^^^\n\n");
+  fflush(stderr);
+}
+
+// todo : add support as to python derivative for K and finner
+
 typedef enum { DefaultInitialized, ContainInfo, InfoCleared } CPS3InfoStatus;
 
 typedef struct CPS3VolumeEnergyInfo {

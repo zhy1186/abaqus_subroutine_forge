@@ -268,3 +268,18 @@ TEST(UMATInfoTest, UMATBasicInfo) {
 
   print_UMAT_basic_info(&info);
 }
+
+TEST(LogTest, LogInfoDebugAndLogArray) {
+  log_info("GTest log info to stderr and flush %d", 1);
+  int debug_info1 = 3;
+  double debug_info2 = 3.1415;
+  const char *debug_info3 = "Alice Bob.";
+  log_debug("debug info 1 = %d, debug info 2 = %f, debug info 3 = %s",
+            debug_info1, debug_info2, debug_info3);
+  int debug_array1[5] = {1, 2, 3, 4};
+  double debug_array2[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  log_debug_array("debug_array1", TYPE_INT, 5, debug_array1);
+  log_debug_array("debug_array2", TYPE_DOUBLE, 6, debug_array2);
+
+  SUCCEED();
+}
