@@ -107,7 +107,7 @@ def assembe_global_stiffness_matrix(stiffness_info):
 if __name__ == "__main__":
     # configuration need to modification
     file_name = "KE.mtx.bak"
-    cross_out_lines = [2, 3, 5, 6, 9, 10, 11, 12, 14, 15, 17, 18]
+    cross_out_lines = [2, 3, 5, 6, 9, 10, 11, 12, 14, 15, 17, 18]  # (1-based)
 
     stiffness_info = read_stiffness_matrices(os.path.abspath(file_name))
     print("读入的单元刚度矩阵信息（可用于校验）：")

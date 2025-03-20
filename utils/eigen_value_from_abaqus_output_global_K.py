@@ -54,6 +54,8 @@ def cross_out_all_displacement_BC_lines(K: NDArray, large_value_criteria=1e30) -
     diag = np.diag(K)
     indices_to_remove = np.where(diag >= large_value_criteria)[0]
 
+    print(f"Entry >= large_value_criteria (indicating displacement BC, 1-based): {indices_to_remove}")
+
     new_matrix = np.delete(K, indices_to_remove, axis=0)
     new_matrix = np.delete(new_matrix, indices_to_remove, axis=1)
 
@@ -94,19 +96,6 @@ def cross_out_displacement_BC_exempt_force_lines(K: NDArray, exempt_units: List[
     return new_K
 
 
-def compute_eigenvalues(equivalent_stiffness_matrix: NDArray) -> NDArray:
-    eigenvalues = np.linalg.eigvals(equivalent_stiffness_matrix)
-    return eigenvalues
-
-
-def count_and_log_negative_values(array: np.ndarray) -> None:
-    total_count = array.size
-    sorted_arr = np.sort(array)
-    negative_count = np.sum(sorted_arr < 0)
-    print(
-        f"[RESULT] : Equivalent stiffness matrix contains {negative_count} negative values of {total_count} total values")
-
-
 def main():
     if len(sys.argv) < 2:
         print("Usage: python eigen_value_prober.py <mtx_filename>")
@@ -116,9 +105,16 @@ def main():
     abs_path = os.path.abspath(filename)
 
     K: NDArray = read_K_from_coordinate_file(abs_path)
+
+    print(f"最终全局刚度矩阵:\n{K}")
+
+    print("未划掉任何行列的特征值为（升序）：")
+    print(np.sort(np.linalg.eigvals(K)))
+
     equivalent_K: NDArray = cross_out_all_displacement_BC_lines(K)
-    eigen_values: NDArray = compute_eigenvalues(equivalent_K)
-    count_and_log_negative_values(eigen_values)
+
+    print("等效刚度矩阵的特征值为（升序）")
+    print(np.sort(np.linalg.eigvals(equivalent_K)))
 
 
 if __name__ == "__main__":

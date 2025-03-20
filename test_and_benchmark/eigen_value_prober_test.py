@@ -220,24 +220,3 @@ def test_cross_out_displacement_BC_exempt_force_lines_hard():
                          [-3.57142857e-01, 0.00000000e+00, 1.64835165e-01, -5.49450549e-01,
                           -1.92307692e-01, 0.00000000e+00, 7.41758242e-01]])
     np.equal(new_K, expected)
-
-
-def test_compute_eigenvalues():
-    # Test compute_eigenvalues with a known matrix.
-    A = np.array([[2, 0],
-                  [0, 3]], dtype=float)
-    eigenvalues = compute_eigenvalues(A)
-    expected = np.array([2, 3])
-    # Eigenvalues might be in any order.
-    assert set(np.round(eigenvalues, 5)) == set(np.round(expected, 5))
-
-
-def test_count_and_log_negative_values(capsys):
-    # Create a sample 1D array.
-    arr = np.array([3, -2, 0, 5, -1, -7, 4], dtype=float)
-    # Call the function (which prints output)
-    count_and_log_negative_values(arr)
-    # Capture printed output.
-    captured = capsys.readouterr().out
-    # The negative values in arr are -2, -1, and -7 (3 negatives out of 7).
-    assert "3 negative values of 7 total values" in captured
