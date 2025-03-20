@@ -29,3 +29,59 @@ cmake-build-*/
 
 # macOS system files
 .DS_Store
+
+####################
+# Python ignores
+####################
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
+
+# Virtual environment directories
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+develop-eggs/
+wheels/
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Mypy type checking cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py

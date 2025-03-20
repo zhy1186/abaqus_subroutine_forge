@@ -1,0 +1,243 @@
+import pytest
+from utils.eigen_value_prober import *
+
+
+def test_read_K_from_coordinate_file(tmp_path):
+    # Create a temporary file with valid COORDINATE format.
+    # This file represents a 2x2 square matrix:
+    # 1 1 1e36
+    # 1 2 0.0
+    # 2 1 0.0
+    # 2 2 1e36
+    file_content = """1 1 1e36
+1 2 0.0
+2 1 0.0
+2 2 1e36
+"""
+    file_path = tmp_path / "matrix.txt"
+    file_path.write_text(file_content)
+
+    # Read matrix from file
+    K = read_K_from_coordinate_file(str(file_path))
+    expected = np.array([[1e36, 0.0],
+                         [0.0, 1e36]])
+    np.array_equal(K, expected)
+
+    # Test invalid file: rows and columns must be equal.
+    file_content_invalid = """1 1 1e36
+1 2 0.0
+2 1 0.0
+3 2 1e36
+"""
+    file_path_invalid = tmp_path / "invalid_matrix.txt"
+    file_path_invalid.write_text(file_content_invalid)
+    with pytest.raises(RuntimeError):
+        read_K_from_coordinate_file(str(file_path_invalid))
+
+
+def test_read_K_from_coordinate_file_hard(tmp_path):
+    file_content = """1 1  1.000000000000000e+36
+1 3 -5.494505494505494e-01
+3 1 -5.494505494505494e-01
+1 4  1.648351648351648e-01
+4 1  1.648351648351648e-01
+1 5 -1.923076923076923e-01
+5 1 -1.923076923076923e-01
+1 6  1.923076923076923e-01
+6 1  1.923076923076923e-01
+1 8 -3.571428571428571e-01
+8 1 -3.571428571428571e-01
+2 2  1.000000000000000e+36
+2 3  1.923076923076923e-01
+3 2  1.923076923076923e-01
+2 4 -1.923076923076923e-01
+4 2 -1.923076923076923e-01
+2 5  1.648351648351648e-01
+5 2  1.648351648351648e-01
+2 6 -5.494505494505494e-01
+6 2 -5.494505494505494e-01
+2 7 -3.571428571428571e-01
+7 2 -3.571428571428571e-01
+3 3  7.417582417582417e-01
+3 4 -3.571428571428571e-01
+4 3 -3.571428571428571e-01
+3 7 -1.923076923076923e-01
+7 3 -1.923076923076923e-01
+3 8  1.648351648351648e-01
+8 3  1.648351648351648e-01
+4 4  7.417582417582417e-01
+4 7  1.923076923076923e-01
+7 4  1.923076923076923e-01
+4 8 -5.494505494505494e-01
+8 4 -5.494505494505494e-01
+5 5  1.000000000000000e+36
+5 6 -3.571428571428571e-01
+6 5 -3.571428571428571e-01
+5 7 -5.494505494505494e-01
+7 5 -5.494505494505494e-01
+5 8  1.923076923076923e-01
+8 5  1.923076923076923e-01
+6 6  7.417582417582417e-01
+6 7  1.648351648351648e-01
+7 6  1.648351648351648e-01
+6 8 -1.923076923076923e-01
+8 6 -1.923076923076923e-01
+7 7  7.417582417582417e-01
+8 8  7.417582417582417e-01
+"""
+    file_path = tmp_path / "matrix.txt"
+    file_path.write_text(file_content)
+
+    # Read matrix from file
+    K = read_K_from_coordinate_file(str(file_path))
+    expected = np.array([[1.00000000e+36, 0.00000000e+00, -5.49450549e-01, 1.64835165e-01,
+                          -1.92307692e-01, 1.92307692e-01, 0.00000000e+00, -3.57142857e-01],
+                         [0.00000000e+00, 1.00000000e+36, 1.92307692e-01, -1.92307692e-01,
+                          1.64835165e-01, -5.49450549e-01, -3.57142857e-01, 0.00000000e+00],
+                         [-5.49450549e-01, 1.92307692e-01, 7.41758242e-01, -3.57142857e-01,
+                          0.00000000e+00, 0.00000000e+00, -1.92307692e-01, 1.64835165e-01],
+                         [1.64835165e-01, -1.92307692e-01, -3.57142857e-01, 7.41758242e-01,
+                          0.00000000e+00, 0.00000000e+00, 1.92307692e-01, -5.49450549e-01],
+                         [-1.92307692e-01, 1.64835165e-01, 0.00000000e+00, 0.00000000e+00,
+                          1.00000000e+36, -3.57142857e-01, -5.49450549e-01, 1.92307692e-01],
+                         [1.92307692e-01, -5.49450549e-01, 0.00000000e+00, 0.00000000e+00,
+                          -3.57142857e-01, 7.41758242e-01, 1.64835165e-01, -1.92307692e-01],
+                         [0.00000000e+00, -3.57142857e-01, -1.92307692e-01, 1.92307692e-01,
+                          -5.49450549e-01, 1.64835165e-01, 7.41758242e-01, 0.00000000e+00],
+                         [-3.57142857e-01, 0.00000000e+00, 1.64835165e-01, -5.49450549e-01,
+                          1.92307692e-01, -1.92307692e-01, 0.00000000e+00, 7.41758242e-01]])
+    np.array_equal(K, expected)
+
+
+def test_cross_out_all_displacement_BC_lines():
+    # Create a 4x4 matrix.
+    # Rows 0 and 2 have very large diagonal values (>= large_value_criteria)
+    K = np.array([[1e36, 1, 2, 3],
+                  [4, 5, 6, 7],
+                  [8, 9, 1e36, 10],
+                  [11, 12, 13, 14]], dtype=float)
+
+    # Using a criteria of 1e30, rows with diag >= 1e30 are to be removed.
+    # Diagonals: index 0 -> 1e36 (remove), index 1 -> 5 (keep),
+    #            index 2 -> 1e36 (remove), index 3 -> 14 (keep).
+    new_K = cross_out_all_displacement_BC_lines(K)
+    # Expected matrix is formed by keeping rows/cols with indices 1 and 3.
+    expected = K[[1, 3], :][:, [1, 3]]
+    np.array_equal(new_K, expected)
+
+
+def test_cross_out_all_displacement_BC_lines_hard():
+    K = np.array([[1.00000000e+36, 0.00000000e+00, -5.49450549e-01, 1.64835165e-01,
+                   -1.92307692e-01, 1.92307692e-01, 0.00000000e+00, -3.57142857e-01],
+                  [0.00000000e+00, 1.00000000e+36, 1.92307692e-01, -1.92307692e-01,
+                   1.64835165e-01, -5.49450549e-01, -3.57142857e-01, 0.00000000e+00],
+                  [-5.49450549e-01, 1.92307692e-01, 7.41758242e-01, -3.57142857e-01,
+                   0.00000000e+00, 0.00000000e+00, -1.92307692e-01, 1.64835165e-01],
+                  [1.64835165e-01, -1.92307692e-01, -3.57142857e-01, 7.41758242e-01,
+                   0.00000000e+00, 0.00000000e+00, 1.92307692e-01, -5.49450549e-01],
+                  [-1.92307692e-01, 1.64835165e-01, 0.00000000e+00, 0.00000000e+00,
+                   1.00000000e+36, -3.57142857e-01, -5.49450549e-01, 1.92307692e-01],
+                  [1.92307692e-01, -5.49450549e-01, 0.00000000e+00, 0.00000000e+00,
+                   -3.57142857e-01, 7.41758242e-01, 1.64835165e-01, -1.92307692e-01],
+                  [0.00000000e+00, -3.57142857e-01, -1.92307692e-01, 1.92307692e-01,
+                   -5.49450549e-01, 1.64835165e-01, 7.41758242e-01, 0.00000000e+00],
+                  [-3.57142857e-01, 0.00000000e+00, 1.64835165e-01, -5.49450549e-01,
+                   1.92307692e-01, -1.92307692e-01, 0.00000000e+00, 7.41758242e-01]])
+    new_K = cross_out_all_displacement_BC_lines(K)
+    expected = np.array([[7.41758242e-01, -3.57142857e-01, 0.00000000e+00, -1.92307692e-01,
+                          1.64835165e-01],
+                         [-3.57142857e-01, 7.41758242e-01, 0.00000000e+00, 1.92307692e-01,
+                          -5.49450549e-01],
+                         [0.00000000e+00, 0.00000000e+00, 7.41758242e-01, 1.64835165e-01,
+                          -1.92307692e-01],
+                         [-1.92307692e-01, 1.92307692e-01, 1.64835165e-01, 7.41758242e-01,
+                          0.00000000e+00],
+                         [1.64835165e-01, -5.49450549e-01, -1.92307692e-01, 0.00000000e+00,
+                          7.41758242e-01]])
+    np.array_equal(new_K, expected)
+
+
+def test_cross_out_displacement_BC_exempt_force_lines():
+    # For this test, assume a matrix with 4 rows/columns representing 2 nodes with 2 DOF each.
+    # Global indexing: node1: indices 0 (DofX), 1 (DofY); node2: indices 2 (DofX), 3 (DofY)
+    # Let the diagonal be:
+    # index 0: 1e36, index 1: 5, index 2: 1e36, index 3: 14.
+    K = np.array([[1e36, 1, 2, 3],
+                  [4, 5, 6, 7],
+                  [8, 9, 1e36, 10],
+                  [11, 12, 13, 14]], dtype=float)
+
+    # Exempt node 1's DofX. For node1 (node number 1) and DofX, global index is computed as:
+    # (1 - 1) * 2 + (1 - 1) = 0.
+    exempt_units = [ExemptUnit(nodes_index=np.array([1]), dof=Dof.DofX)]
+
+    new_K = cross_out_displacement_BC_exempt_force_lines(K, exempt_units, large_value_criteria=1e30)
+    # Now, index 0 (exempt) is not removed even if large,
+    # index 1 (node1, DofY) is kept (diag=5),
+    # index 2 (node2, DofX) is removed (diag=1e36, not exempt),
+    # index 3 (node2, DofY) is kept (diag=14).
+    # So the remaining indices are [0, 1, 3]
+    expected = K[[0, 1, 3], :][:, [0, 1, 3]]
+    np.array_equal(new_K, expected)
+
+
+def test_cross_out_displacement_BC_exempt_force_lines_hard():
+    K = np.array([[1.00000000e+36, 0.00000000e+00, -5.49450549e-01, 1.64835165e-01,
+                   -1.92307692e-01, 1.92307692e-01, 0.00000000e+00, -3.57142857e-01],
+                  [0.00000000e+00, 1.00000000e+36, 1.92307692e-01, -1.92307692e-01,
+                   1.64835165e-01, -5.49450549e-01, -3.57142857e-01, 0.00000000e+00],
+                  [-5.49450549e-01, 1.92307692e-01, 7.41758242e-01, -3.57142857e-01,
+                   0.00000000e+00, 0.00000000e+00, -1.92307692e-01, 1.64835165e-01],
+                  [1.64835165e-01, -1.92307692e-01, -3.57142857e-01, 7.41758242e-01,
+                   0.00000000e+00, 0.00000000e+00, 1.92307692e-01, -5.49450549e-01],
+                  [-1.92307692e-01, 1.64835165e-01, 0.00000000e+00, 0.00000000e+00,
+                   1.00000000e+36, -3.57142857e-01, -5.49450549e-01, 1.92307692e-01],
+                  [1.92307692e-01, -5.49450549e-01, 0.00000000e+00, 0.00000000e+00,
+                   -3.57142857e-01, 7.41758242e-01, 1.64835165e-01, -1.92307692e-01],
+                  [0.00000000e+00, -3.57142857e-01, -1.92307692e-01, 1.92307692e-01,
+                   -5.49450549e-01, 1.64835165e-01, 7.41758242e-01, 0.00000000e+00],
+                  [-3.57142857e-01, 0.00000000e+00, 1.64835165e-01, -5.49450549e-01,
+                   1.92307692e-01, -1.92307692e-01, 0.00000000e+00, 7.41758242e-01]])
+    exempt_units = [ExemptUnit(nodes_index=np.array([1, 3]), dof=Dof.DofX),
+                    ExemptUnit(nodes_index=np.array([1]), dof=Dof.DofY)]
+    new_K = cross_out_displacement_BC_exempt_force_lines(K, exempt_units)
+    np.array_equal(K, new_K)
+    exempt_units = [ExemptUnit(nodes_index=np.array([1]), dof=Dof.DofX),
+                    ExemptUnit(nodes_index=np.array([1]), dof=Dof.DofY)]
+    new_K = cross_out_displacement_BC_exempt_force_lines(K, exempt_units)
+    expected = np.array([[1.00000000e+36, 0.00000000e+00, -5.49450549e-01, 1.64835165e-01,
+                          1.92307692e-01, 0.00000000e+00, -3.57142857e-01],
+                         [0.00000000e+00, 1.00000000e+36, 1.92307692e-01, -1.92307692e-01,
+                          -5.49450549e-01, -3.57142857e-01, 0.00000000e+00],
+                         [-5.49450549e-01, 1.92307692e-01, 7.41758242e-01, -3.57142857e-01,
+                          0.00000000e+00, -1.92307692e-01, 1.64835165e-01],
+                         [1.64835165e-01, -1.92307692e-01, -3.57142857e-01, 7.41758242e-01,
+                          0.00000000e+00, 1.92307692e-01, -5.49450549e-01],
+                         [1.92307692e-01, -5.49450549e-01, 0.00000000e+00, 0.00000000e+00,
+                          7.41758242e-01, 1.64835165e-01, -1.92307692e-01],
+                         [0.00000000e+00, -3.57142857e-01, -1.92307692e-01, 1.92307692e-01,
+                          1.64835165e-01, 7.41758242e-01, 0.00000000e+00],
+                         [-3.57142857e-01, 0.00000000e+00, 1.64835165e-01, -5.49450549e-01,
+                          -1.92307692e-01, 0.00000000e+00, 7.41758242e-01]])
+    np.equal(new_K, expected)
+
+
+def test_compute_eigenvalues():
+    # Test compute_eigenvalues with a known matrix.
+    A = np.array([[2, 0],
+                  [0, 3]], dtype=float)
+    eigenvalues = compute_eigenvalues(A)
+    expected = np.array([2, 3])
+    # Eigenvalues might be in any order.
+    assert set(np.round(eigenvalues, 5)) == set(np.round(expected, 5))
+
+
+def test_count_and_log_negative_values(capsys):
+    # Create a sample 1D array.
+    arr = np.array([3, -2, 0, 5, -1, -7, 4], dtype=float)
+    # Call the function (which prints output)
+    count_and_log_negative_values(arr)
+    # Capture printed output.
+    captured = capsys.readouterr().out
+    # The negative values in arr are -2, -1, and -7 (3 negatives out of 7).
+    assert "3 negative values of 7 total values" in captured

@@ -55,6 +55,7 @@ void log_debug_array(const char *name, DebugOutputArrayType type, int length,
 }
 
 // todo : add support as to python derivative for K and finner
+// todo : support negative eigen value calculate (util)
 
 typedef enum { DefaultInitialized, ContainInfo, InfoCleared } CPS3InfoStatus;
 
