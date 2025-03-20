@@ -1,4 +1,4 @@
-# eigen_value_prober.py -- python util to compute and identify negative eigen values of effective stiffness natrix
+# eigen_value_prober.py -- python util to compute and identify negative eigen values of equivalent stiffness natrix
 # created by Hengyi Zhao @ 03192025
 # Note : After carefully research, choose FORMAT=COORDINATE as input matrix format
 #        This format is denote by "row_index col_index entry" (3 terms)
@@ -7,6 +7,8 @@
 #        Abaqus use large number (1e36) to identify this dof
 #        Including displacement = 0 and displacement != 0 dof
 
+import sys
+import os
 import numpy as np
 from enum import Enum
 from numpy.typing import NDArray
@@ -92,8 +94,8 @@ def cross_out_displacement_BC_exempt_force_lines(K: NDArray, exempt_units: List[
     return new_K
 
 
-def compute_eigenvalues(effective_stiffness_matrix: NDArray) -> NDArray:
-    eigenvalues = np.linalg.eigvals(effective_stiffness_matrix)
+def compute_eigenvalues(equivalent_stiffness_matrix: NDArray) -> NDArray:
+    eigenvalues = np.linalg.eigvals(equivalent_stiffness_matrix)
     return eigenvalues
 
 
@@ -102,4 +104,22 @@ def count_and_log_negative_values(array: np.ndarray) -> None:
     sorted_arr = np.sort(array)
     negative_count = np.sum(sorted_arr < 0)
     print(
-        f"[RESULT] : Effective stiffness matrix contains {negative_count} negative values of {total_count} total values")
+        f"[RESULT] : Equivalent stiffness matrix contains {negative_count} negative values of {total_count} total values")
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python eigen_value_prober.py <mtx_filename>")
+        sys.exit(1)
+
+    filename = sys.argv[1]
+    abs_path = os.path.abspath(filename)
+
+    K: NDArray = read_K_from_coordinate_file(abs_path)
+    equivalent_K: NDArray = cross_out_all_displacement_BC_lines(K)
+    eigen_values: NDArray = compute_eigenvalues(equivalent_K)
+    count_and_log_negative_values(eigen_values)
+
+
+if __name__ == "__main__":
+    main()
