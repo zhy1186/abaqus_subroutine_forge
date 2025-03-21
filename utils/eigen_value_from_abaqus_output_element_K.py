@@ -130,11 +130,9 @@ def main(abs_path, cross_out_lines):
 
 
 if __name__ == "__main__":
-    cross_out_lines = [2, 3, 5, 6, 9, 10, 11, 12, 14, 15, 17, 18]  # (1-based)
-    if len(sys.argv) < 2:
-        print("Usage: python eigen_value_prober.py <mtx_filename>")
-        sys.exit(1)
-    # configuration need to modification
-    filename = sys.argv[1]
-    abs_path = os.path.abspath(filename)
-    main(abs_path, cross_out_lines)
+    # Configurations need to config
+    file_name = "file_name.inp"
+    cross_out_lines_1_based = [2, 3, 5, 6, 9, 10, 11, 12, 14, 15, 17, 18]  # (1-based)
+
+    abs_path = os.path.abspath(file_name)
+    main(abs_path, cross_out_lines_1_based)

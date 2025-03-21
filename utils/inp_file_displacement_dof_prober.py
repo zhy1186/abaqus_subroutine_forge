@@ -1,5 +1,6 @@
 import os.path
 import re
+import sys
 import numpy as np
 
 
@@ -104,9 +105,15 @@ def extract_boundary_conditions_from_inp(inp_file_path):
     return boundary_conditions
 
 
-if __name__ == "__main__":
-    inp_file_path = os.path.abspath('AbaqusEigenValueReseaerch_EigenValueProber_KeKglobalDiffer_Stable.inp')
-    boundary_conditions = extract_boundary_conditions_from_inp(inp_file_path)
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python eigen_value_prober.py <mtx_filename>")
+        sys.exit(1)
+
+    filename = sys.argv[1]
+    abs_path = os.path.abspath(filename)
+
+    boundary_conditions = extract_boundary_conditions_from_inp(abs_path)
     fixed_dof = []
     displacement_bc_dof = []
     for boundary_condition in boundary_conditions:
@@ -118,3 +125,7 @@ if __name__ == "__main__":
     print("请注意，虽然已经经过了集成测试，但由于投用时间较短，以下结果应当经过手动检查：")
     print(f"所有位移边界自由度(1-based)为\t{np.array2string(np.sort(displacement_bc_dof), separator=',')}")
     print(f"固定位移自由度(1-based)为\t{np.array2string(np.sort(fixed_dof), separator=',')}")
+
+
+if __name__ == "__main__":
+    main()

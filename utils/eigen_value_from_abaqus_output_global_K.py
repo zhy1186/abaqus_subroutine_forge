@@ -98,7 +98,7 @@ def cross_out_displacement_BC_exempt_force_lines(K: NDArray, exempt_units: List[
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python eigen_value_prober.py <mtx_filename>")
+        print("Usage: python eigen_value_prober.py <inp_filename>")
         sys.exit(1)
 
     filename = sys.argv[1]
