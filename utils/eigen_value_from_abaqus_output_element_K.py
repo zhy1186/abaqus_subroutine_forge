@@ -88,7 +88,7 @@ def read_stiffness_matrices(filepath: str):
     return matrices
 
 
-def assembe_global_stiffness_matrix(stiffness_info):
+def assemble_global_stiffness_matrix(stiffness_info):
     max_dof = max(max(elem["dofs"]) for elem in stiffness_info.values())
     K_global = np.zeros((max_dof, max_dof))
 
@@ -113,7 +113,7 @@ def main(abs_path, cross_out_lines):
         print(f"dof (1 based) is {info['dofs']}")
         print(f"element stiffness matrix = \n{info['matrix']}")
         print(60 * '=')
-    global_K = assembe_global_stiffness_matrix(stiffness_info)
+    global_K = assemble_global_stiffness_matrix(stiffness_info)
 
     print("最终全局刚度矩阵:")
     print(global_K)
