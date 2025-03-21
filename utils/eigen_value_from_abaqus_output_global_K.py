@@ -106,7 +106,7 @@ def main():
 
     K: NDArray = read_K_from_coordinate_file(abs_path)
 
-    print(f"最终全局刚度矩阵:\n{K}")
+    # print(f"最终全局刚度矩阵:\n{K}")
 
     print("未划掉任何行列的特征值为（升序）：")
     print(np.sort(np.linalg.eigvals(K)))
