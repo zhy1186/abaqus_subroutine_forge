@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import re
 import os
+import sys
 
 
 def reorder_matrix_to_global_order(nodes, matrix):
@@ -104,12 +105,8 @@ def assembe_global_stiffness_matrix(stiffness_info):
     return K_global
 
 
-if __name__ == "__main__":
-    # configuration need to modification
-    file_name = "KE.mtx.bak"
-    cross_out_lines = [2, 3, 5, 6, 9, 10, 11, 12, 14, 15, 17, 18]  # (1-based)
-
-    stiffness_info = read_stiffness_matrices(os.path.abspath(file_name))
+def main(abs_path, cross_out_lines):
+    stiffness_info = read_stiffness_matrices(abs_path)
     print("读入的单元刚度矩阵信息（可用于校验）：")
     for element_id, info in stiffness_info.items():
         print(20 * '-' + f" element id = {element_id} " + 20 * '-')
@@ -130,3 +127,14 @@ if __name__ == "__main__":
 
     print("等效刚度矩阵的特征值为（升序）")
     print(np.sort(np.linalg.eigvals(new_matrix)))
+
+
+if __name__ == "__main__":
+    cross_out_lines = [2, 3, 5, 6, 9, 10, 11, 12, 14, 15, 17, 18]  # (1-based)
+    if len(sys.argv) < 2:
+        print("Usage: python eigen_value_prober.py <mtx_filename>")
+        sys.exit(1)
+    # configuration need to modification
+    filename = sys.argv[1]
+    abs_path = os.path.abspath(filename)
+    main(abs_path, cross_out_lines)
