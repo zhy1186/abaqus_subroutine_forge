@@ -938,6 +938,7 @@ CPS3NodalInfo CPS3_compute_inner_force_use_E_and_T(
   Matrix2D E_tensor = CPS3_2D_F_to_2D_E(&F);
   Matrix2D E_engineering = CPS3_tensor_strain_to_engineering_strain(&E_tensor);
 
+  // as E and T use same voigt function, thus shear E x 2 first
   Matrix2D T = CPS3_2D_strain_to_2D_stress(&E_engineering, property);
   Matrix2D sigma = CPS3_T_and_F_to_Cauchy(&T, &F);
   Vector3D sigma_voigt = voigt_2D_matrix_to_3D_vector(&sigma);
