@@ -5,7 +5,7 @@ import numpy as np
 
 
 # 提取节点集（包括普通节点集和generate模式下的节点集）
-def extract_node_sets_from_inp(inp_file_path):
+def extract_node_sets_from_inp(inp_file_path, target_part):
     node_sets = {}
     capturing = False  # 是否正在捕获节点数据
     generate_mode = False  # 是否采用generate模式
@@ -16,7 +16,7 @@ def extract_node_sets_from_inp(inp_file_path):
 
     for line in lines:
         # 检查是否为*Nset行（不区分大小写）
-        if line.strip().upper().startswith('*NSET'):
+        if line.strip().upper().startswith('*NSET') and target_part in line:
             capturing = True
             generate_mode = False  # 默认不是generate模式
             # 提取节点集名称（nset关键字后面的名称）
@@ -55,8 +55,8 @@ def extract_node_sets_from_inp(inp_file_path):
 
 
 # 提取边界条件，并计算每个节点的自由度索引（dof_idx）
-def extract_boundary_conditions_from_inp(inp_file_path):
-    node_sets = extract_node_sets_from_inp(inp_file_path)  # 提取所有节点集
+def extract_boundary_conditions_from_inp(inp_file_path, target_part):
+    node_sets = extract_node_sets_from_inp(inp_file_path, target_part)  # 提取所有节点集
     boundary_conditions = []
     capture_boundary = False
 
@@ -113,7 +113,8 @@ def main():
     filename = sys.argv[1]
     abs_path = os.path.abspath(filename)
 
-    boundary_conditions = extract_boundary_conditions_from_inp(abs_path)
+    target_part = 'Part-1-1'
+    boundary_conditions = extract_boundary_conditions_from_inp(abs_path, target_part)
     fixed_dof = []
     displacement_bc_dof = []
     for boundary_condition in boundary_conditions:
