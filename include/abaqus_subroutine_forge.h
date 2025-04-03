@@ -21,18 +21,20 @@
 #define DIMENSION2 2
 #define DIMENSION3 3
 #define DIMENSION_CPS3 6
+#define DIMENSION_C3D4 12
 
 #define ZERO_TOLERANCE 1e-15
 
 typedef enum {
+  Vector2X1,
+  Vector3X1,
+  Vector6X1,
+  Vector12X1,
   Matrix2X2,
   Matrix3X3,
-  Vector3X1,
-  Vector2X1,
-  Vector6X1,
+  Matrix6X6,
   MatrixB3X6,
-  MatrixB6X3,
-  Matrix6X6
+  MatrixB6X3
 } MatrixType;
 
 // Util functions
@@ -441,6 +443,19 @@ Matrix3D matrix_3D_transpose(const Matrix3D* mat) {
                           mat->data[0][2], mat->data[1][2], mat->data[2][2]);
 }
 
+Matrix6D matrix_6D_transpose(const Matrix6D* mat) {
+  return create_matrix_6D(
+      mat->data[0][0], mat->data[1][0], mat->data[2][0], mat->data[3][0],
+      mat->data[4][0], mat->data[5][0], mat->data[0][1], mat->data[1][1],
+      mat->data[2][1], mat->data[3][1], mat->data[4][1], mat->data[5][1],
+      mat->data[0][2], mat->data[1][2], mat->data[2][2], mat->data[3][2],
+      mat->data[4][2], mat->data[5][2], mat->data[0][3], mat->data[1][3],
+      mat->data[2][3], mat->data[3][3], mat->data[4][3], mat->data[5][3],
+      mat->data[0][4], mat->data[1][4], mat->data[2][4], mat->data[3][4],
+      mat->data[4][4], mat->data[5][4], mat->data[0][5], mat->data[1][5],
+      mat->data[2][5], mat->data[3][5], mat->data[4][5], mat->data[5][5]);
+}
+
 Matrix2D matrix_2D_add(const Matrix2D* matrix_a, const Matrix2D* matrix_b) {
   return create_matrix_2D(matrix_a->data[0][0] + matrix_b->data[0][0],
                           matrix_a->data[0][1] + matrix_b->data[0][1],
@@ -488,6 +503,70 @@ Matrix3D matrix_3D_negative(const Matrix3D* mat) {
 Matrix3D matrix_3D_minus(const Matrix3D* matrix_a, const Matrix3D* matrix_b) {
   const Matrix3D negative_matrix_b = matrix_3D_negative(matrix_b);
   return matrix_3D_add(matrix_a, &negative_matrix_b);
+}
+
+Matrix6D matrix_6D_add(const Matrix6D* matrix_a, const Matrix6D* matrix_b) {
+  return create_matrix_6D(matrix_a->data[0][0] + matrix_b->data[0][0],
+                          matrix_a->data[0][1] + matrix_b->data[0][1],
+                          matrix_a->data[0][2] + matrix_b->data[0][2],
+                          matrix_a->data[0][3] + matrix_b->data[0][3],
+                          matrix_a->data[0][4] + matrix_b->data[0][4],
+                          matrix_a->data[0][5] + matrix_b->data[0][5],
+                          matrix_a->data[1][0] + matrix_b->data[1][0],
+                          matrix_a->data[1][1] + matrix_b->data[1][1],
+                          matrix_a->data[1][2] + matrix_b->data[1][2],
+                          matrix_a->data[1][3] + matrix_b->data[1][3],
+                          matrix_a->data[1][4] + matrix_b->data[1][4],
+                          matrix_a->data[1][5] + matrix_b->data[1][5],
+                          matrix_a->data[2][0] + matrix_b->data[2][0],
+                          matrix_a->data[2][1] + matrix_b->data[2][1],
+                          matrix_a->data[2][2] + matrix_b->data[2][2],
+                          matrix_a->data[2][3] + matrix_b->data[2][3],
+                          matrix_a->data[2][4] + matrix_b->data[2][4],
+                          matrix_a->data[2][5] + matrix_b->data[2][5],
+                          matrix_a->data[3][0] + matrix_b->data[3][0],
+                          matrix_a->data[3][1] + matrix_b->data[3][1],
+                          matrix_a->data[3][2] + matrix_b->data[3][2],
+                          matrix_a->data[3][3] + matrix_b->data[3][3],
+                          matrix_a->data[3][4] + matrix_b->data[3][4],
+                          matrix_a->data[3][5] + matrix_b->data[3][5],
+                          matrix_a->data[4][0] + matrix_b->data[4][0],
+                          matrix_a->data[4][1] + matrix_b->data[4][1],
+                          matrix_a->data[4][2] + matrix_b->data[4][2],
+                          matrix_a->data[4][3] + matrix_b->data[4][3],
+                          matrix_a->data[4][4] + matrix_b->data[4][4],
+                          matrix_a->data[4][5] + matrix_b->data[4][5],
+                          matrix_a->data[5][0] + matrix_b->data[5][0],
+                          matrix_a->data[5][1] + matrix_b->data[5][1],
+                          matrix_a->data[5][2] + matrix_b->data[5][2],
+                          matrix_a->data[5][3] + matrix_b->data[5][3],
+                          matrix_a->data[5][4] + matrix_b->data[5][4],
+                          matrix_a->data[5][5] + matrix_b->data[5][5]);
+}
+
+Matrix6D matrix_6D_number_multiplication(double num, const Matrix6D* mat) {
+  return create_matrix_6D(
+      num * mat->data[0][0], num * mat->data[0][1], num * mat->data[0][2],
+      num * mat->data[0][3], num * mat->data[0][4], num * mat->data[0][5],
+      num * mat->data[1][0], num * mat->data[1][1], num * mat->data[1][2],
+      num * mat->data[1][3], num * mat->data[1][4], num * mat->data[1][5],
+      num * mat->data[2][0], num * mat->data[2][1], num * mat->data[2][2],
+      num * mat->data[2][3], num * mat->data[2][4], num * mat->data[2][5],
+      num * mat->data[3][0], num * mat->data[3][1], num * mat->data[3][2],
+      num * mat->data[3][3], num * mat->data[3][4], num * mat->data[3][5],
+      num * mat->data[4][0], num * mat->data[4][1], num * mat->data[4][2],
+      num * mat->data[4][3], num * mat->data[4][4], num * mat->data[4][5],
+      num * mat->data[5][0], num * mat->data[5][1], num * mat->data[5][2],
+      num * mat->data[5][3], num * mat->data[5][4], num * mat->data[5][5]);
+}
+
+Matrix6D matrix_6D_negative(const Matrix6D* mat) {
+  return matrix_6D_number_multiplication(-1, mat);
+}
+
+Matrix6D matrix_6D_minus(const Matrix6D* matrix_a, const Matrix6D* matrix_b) {
+  Matrix6D minus_matrix_b = matrix_6D_negative(matrix_b);
+  return matrix_6D_add(matrix_a, &minus_matrix_b);
 }
 
 Vector2D vector_2D_add(const Vector2D* vector_a, const Vector2D* vector_b) {
@@ -672,6 +751,76 @@ Matrix3D matrix_3D_inverse(const Matrix3D* mat) {
   return matrix_3D_transpose(&result);
 }
 
+double matrix_6D_determinant(const Matrix6D* const mat) {
+  // 初始化排列为 {0, 1, 2, 3, 4, 5}
+  int perm[DIMENSION_CPS3] = {0, 1, 2, 3, 4, 5};
+  double det = 0.0;
+
+  while (true) {
+    // 计算当前排列对应的乘积
+    double prod = 1.0;
+    for (int i = 0; i < DIMENSION_CPS3; i++) {
+      prod *= mat->data[i][perm[i]];
+    }
+
+    // 计算排列的逆序数以确定排列的符号
+    int inv = 0;
+    for (int i = 0; i < DIMENSION_CPS3; i++) {
+      for (int j = i + 1; j < DIMENSION_CPS3; j++) {
+        if (perm[i] > perm[j]) inv++;
+      }
+    }
+    double sign = (inv % 2 == 0) ? 1.0 : -1.0;
+    det += sign * prod;
+
+    // 生成下一个排列（字典序排列算法）
+    int i;
+    for (i = DIMENSION_CPS3 - 2; i >= 0; i--) {
+      if (perm[i] < perm[i + 1]) break;
+    }
+    if (i < 0)  // 已经遍历完所有排列
+      break;
+
+    int j;
+    for (j = DIMENSION_CPS3 - 1; j > i; j--) {
+      if (perm[j] > perm[i]) break;
+    }
+    // 交换 perm[i] 与 perm[j]
+    int temp = perm[i];
+    perm[i] = perm[j];
+    perm[j] = temp;
+
+    // 反转 perm[i+1...DIMENSION_CPS3-1]
+    for (int k = i + 1, l = DIMENSION_CPS3 - 1; k < l; k++, l--) {
+      temp = perm[k];
+      perm[k] = perm[l];
+      perm[l] = temp;
+    }
+  }
+  return det;
+}
+
+Vector6D matrix_6D_mul_vector_6D(const Matrix6D* mat, const Vector6D* vec) {
+  Vector6D result = create_empty_vector_6D();
+  for (int i = 0; i < DIMENSION_CPS3; i++) {
+    for (int j = 0; j < DIMENSION_CPS3; j++) {
+      result.data[i] += mat->data[i][j] * vec->data[j];
+    }
+  }
+  return result;
+}
+
+Matrix6D matrix_6D_mul_matrix_6D(const Matrix6D* mat1, const Matrix6D* mat2) {
+  Matrix6D result = create_empty_matrix_6D();
+  for (int i = 0; i < DIMENSION_CPS3; i++) {
+    for (int j = 0; j < DIMENSION_CPS3; j++) {
+      for (int k = 0; k < DIMENSION_CPS3; k++) {
+        result.data[i][j] += mat1->data[i][k] * mat2->data[k][j];
+      }
+    }
+  }
+  return result;
+}
 // voigt vector and matrix transform
 Vector3D voigt_2D_matrix_to_3D_vector(const Matrix2D* mat) {
   double sym_delta = mat->data[0][1] - mat->data[1][0];
@@ -685,6 +834,33 @@ Vector3D voigt_2D_matrix_to_3D_vector(const Matrix2D* mat) {
 Matrix2D voigt_3D_vector_to_2D_matrix(const Vector3D* vec) {
   return create_matrix_2D(vec->data[0], vec->data[2], vec->data[2],
                           vec->data[1]);
+}
+
+Vector6D voigt_3D_matrix_to_6D_vector(const Matrix3D* mat) {
+  // matrix symmetry check
+  double sym_delta01 = mat->data[0][1] - mat->data[1][0];
+  double sym_delta02 = mat->data[0][2] - mat->data[2][0];
+  double sym_delta12 = mat->data[1][2] - mat->data[2][1];
+  if (!((sym_delta01 <= ZERO_TOLERANCE) && (sym_delta01 >= -ZERO_TOLERANCE)) ||
+      !((sym_delta02 <= ZERO_TOLERANCE) && (sym_delta02 >= -ZERO_TOLERANCE)) ||
+      !((sym_delta12 <= ZERO_TOLERANCE) && (sym_delta12 >= -ZERO_TOLERANCE))) {
+    fatal_error("FATAL: only symmetric matrix can use voigt transformation.\n");
+  }
+
+  // assemble voigt vector
+  return create_vector_6D(mat->data[0][0],   // xx
+                          mat->data[1][1],   // yy
+                          mat->data[2][2],   // zz
+                          mat->data[1][2],   // yz
+                          mat->data[0][2],   // xz
+                          mat->data[0][1]);  // xy
+}
+
+Matrix3D voigt_6D_vector_to_3D_matrix(const Vector6D* vec) {
+  // [0]: xx, [1]: yy, [2]: zz, [3]: yz, [4]: xz, [5]: xy
+  return create_matrix_3D(vec->data[0], vec->data[5], vec->data[4],
+                          vec->data[5], vec->data[1], vec->data[3],
+                          vec->data[4], vec->data[3], vec->data[2]);
 }
 
 //  mechanics method for UEL development

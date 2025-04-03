@@ -3,6 +3,7 @@
 //
 #include <gtest/gtest.h>
 
+#include "abaqus_subroutine_force_3D.h"
 #include "abaqus_subroutine_forge.h"
 #include "eigen_adaptor.h"
 
@@ -11,7 +12,6 @@ TEST(BasicMathTest, TransposeMatrix2D) {
   Matrix2D trans = matrix_2D_transpose(&mat);
 
   Eigen::Matrix2d eigen_trans = to_eigen(mat).transpose();
-
   EXPECT_EQ(eigen_trans, to_eigen(trans));
 }
 
@@ -20,7 +20,16 @@ TEST(BasicMathTest, TransposeMatrix3D) {
   Matrix3D trans = matrix_3D_transpose(&mat);
 
   Eigen::Matrix3d eigen_trans = to_eigen(mat).transpose();
+  EXPECT_EQ(eigen_trans, to_eigen(trans));
+}
 
+TEST(BasicMathTest, TransposeMatrix6D) {
+  Matrix6D mat = create_matrix_6D(
+      1.0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36);
+  Matrix6D trans = matrix_6D_transpose(&mat);
+
+  Eigen::Matrix<double, 6, 6> eigen_trans = to_eigen(mat).transpose();
   EXPECT_EQ(eigen_trans, to_eigen(trans));
 }
 
@@ -47,6 +56,19 @@ TEST(BasicMathTest, AddMatrix3D) {
   Eigen::Matrix3d result_eigen = mat1_eigen + mat2_eigen;
 
   EXPECT_EQ(to_eigen(result), result_eigen);
+}
+
+TEST(BasicMathTest, AddMatrix6D) {
+  Matrix6D mat1 = create_matrix_6D(
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36);
+  Matrix6D mat2 = create_matrix_6D(
+      36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19,
+      18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1);
+  Matrix6D sum = matrix_6D_add(&mat1, &mat2);
+  Eigen::Matrix<double, 6, 6> sum_expected;
+  sum_expected = to_eigen(mat1) + to_eigen(mat2);
+  EXPECT_EQ(to_eigen(sum), sum_expected);
 }
 
 TEST(BasicMathTest, AddVector2D) {
@@ -107,6 +129,17 @@ TEST(BasicMathTest, NumMulMatrix3D) {
   EXPECT_EQ(to_eigen(result), result_eigen);
 }
 
+TEST(BasicMathTest, NumMulMatrix6D) {
+  const double factor = 1.23;
+  Matrix6D mat = create_matrix_6D(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                                  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                  26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36);
+  Matrix6D res = matrix_6D_number_multiplication(factor, &mat);
+  Eigen::Matrix<double, 6, 6> expected = factor * to_eigen(mat);
+
+  EXPECT_EQ(to_eigen(res), expected);
+}
+
 TEST(BasicMathTest, NumMulVector2D) {
   const double factor = 3.0;
   Vector2D mat = create_vector_2D(1.0, 2.0);
@@ -156,6 +189,18 @@ TEST(BasicMathTest, NegativeMatrix3D) {
 
   Eigen::Matrix3d mat_eigen = to_eigen(mat);
   Eigen::Matrix3d result_eigen = -mat_eigen;
+
+  EXPECT_EQ(to_eigen(result), result_eigen);
+}
+
+TEST(BasicMathTest, NegativeMatrix6D) {
+  Matrix6D mat = create_matrix_6D(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                                  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                  26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36);
+  Matrix6D result = matrix_6D_negative(&mat);
+
+  Eigen::Matrix<double, 6, 6> mat_eigen = to_eigen(mat);
+  Eigen::Matrix<double, 6, 6> result_eigen = -mat_eigen;
 
   EXPECT_EQ(to_eigen(result), result_eigen);
 }
@@ -213,6 +258,19 @@ TEST(BasicMathTest, MinusMatrix3D) {
   Eigen::Matrix3d result_eigen = mat1_eigen - mat2_eigen;
 
   EXPECT_EQ(to_eigen(result), result_eigen);
+}
+
+TEST(BasicMathTest, MinusMatrix6D) {
+  Matrix6D mat1 = create_matrix_6D(
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36);
+  Matrix6D mat2 = create_matrix_6D(
+      1, 3, 4, 5, 6, 8, 7, 9, 10, 13, 11, 13, 25, 36, 37, 87, 98, 76, 54, 26,
+      15, 11, 22, 57, 45, 34, 23, 43, 21, 56, 76, 5567, 54, 33, 25, 65);
+  Matrix6D res = matrix_6D_minus(&mat1, &mat2);
+
+  Eigen::Matrix<double, 6, 6> expected = to_eigen(mat1) - to_eigen(mat2);
+  EXPECT_EQ(to_eigen(res), expected);
 }
 
 TEST(BasicMathTest, MinusVector2D) {
@@ -277,6 +335,22 @@ TEST(BasicMathTest, MulMatrix3DMatrix3D) {
   EXPECT_EQ(to_eigen(result), result_eigen);
 }
 
+TEST(BasicMathTest, MulMatrix6DMatrix6D) {
+  Matrix6D mat1 = create_matrix_6D(
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36);
+  Matrix6D mat2 = create_matrix_6D(
+      52, 21, 342, 4, 5, 8, 7, 8, 9, 10, 11, 102, 13, 14, 15, 16, 17, 18, 19,
+      20, 21, 2, 23, 24, 25, 26, 27, 21, 29, 0, 31, 32, 33, 34, 35, 36);
+  Matrix6D res = matrix_6D_mul_matrix_6D(&mat1, &mat2);
+
+  Eigen::Matrix<double, 6, 6> mat1_eigen = to_eigen(mat1);
+  Eigen::Matrix<double, 6, 6> mat2_eigen = to_eigen(mat2);
+  Eigen::Matrix<double, 6, 6> expected = mat1_eigen * mat2_eigen;
+
+  EXPECT_EQ(to_eigen(res), expected);
+}
+
 TEST(BasicMathTest, MulMatrix2DVector2D) {
   Matrix2D mat = create_matrix_2D(1.0, 2.0, 3.0, 4.0);
   Vector2D vec = create_vector_2D(5.0, 6.0);
@@ -301,6 +375,20 @@ TEST(BasicMathTest, MulMatrix3DVector3D) {
   EXPECT_EQ(to_eigen(result), result_eigen);
 }
 
+TEST(BasicMathTest, MulMatrix6DVector6D) {
+  Matrix6D mat = create_matrix_6D(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                                  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                  26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36);
+  Vector6D vec = create_vector_6D(1, 2, 3, 4, 5, 6);
+  Vector6D res = matrix_6D_mul_vector_6D(&mat, &vec);
+
+  Eigen::Matrix<double, 6, 6> mat_eigen = to_eigen(mat);
+  Eigen::Vector<double, 6> vec_eigen = to_eigen(vec);
+  Eigen::Vector<double, 6> expected = mat_eigen * vec_eigen;
+
+  EXPECT_EQ(to_eigen(res), expected);
+}
+
 TEST(BasicMathTest, DetMatrix2D) {
   Matrix2D mat = create_matrix_2D(1.0, 2.0, 3.0, 4.0);
   double det = matrix_2D_determinant(&mat);
@@ -313,6 +401,18 @@ TEST(BasicMathTest, DetMatrix3D) {
   double det = matrix_3D_determinant(&mat);
   double det_eigen = to_eigen(mat).determinant();
   EXPECT_EQ(det, det_eigen);
+}
+
+TEST(BasicMathTest, DetMatrix6D) {
+  Matrix6D mat = create_matrix_6D(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                                  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                  26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36);
+  double det = matrix_6D_determinant(&mat);
+
+  Eigen::Matrix<double, 6, 6> mat_eigen = to_eigen(mat);
+  double expected = mat_eigen.determinant();
+
+  EXPECT_EQ(det, expected);
 }
 
 TEST(BasicMathTest, InvMatrix2D) {

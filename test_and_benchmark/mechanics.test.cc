@@ -6,6 +6,7 @@
 
 #include <Eigen/Dense>
 
+#include "abaqus_subroutine_force_3D.h"
 #include "abaqus_subroutine_forge.h"
 #include "eigen_adaptor.h"
 
@@ -324,4 +325,158 @@ TEST(MechanicsTest, CPS3ComputeInnerForce) {
   EXPECT_NEAR(inner_force.node1_dof1, -0.1, 0.1 * error_tolerance);
   EXPECT_NEAR(inner_force.node1_dof2, 0.001, 0.001 * error_tolerance);
   EXPECT_NEAR(inner_force.node3_dof1, 0.0002, 0.0002 * error_tolerance * 10);
+}
+
+TEST(MechanicsTest, C3D4NodalInfo) {
+  C3D4NodalInfo info1 =
+      create_C3D4_nodal_info(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+  // test passed-in info1
+  EXPECT_EQ(info1.node1_dof1, 1);
+  EXPECT_EQ(info1.node1_dof2, 2);
+  EXPECT_EQ(info1.node1_dof3, 3);
+  EXPECT_EQ(info1.node2_dof1, 4);
+  EXPECT_EQ(info1.node2_dof2, 5);
+  EXPECT_EQ(info1.node2_dof3, 6);
+  EXPECT_EQ(info1.node3_dof1, 7);
+  EXPECT_EQ(info1.node3_dof2, 8);
+  EXPECT_EQ(info1.node3_dof3, 9);
+  EXPECT_EQ(info1.node4_dof1, 10);
+  EXPECT_EQ(info1.node4_dof2, 11);
+  EXPECT_EQ(info1.node4_dof3, 12);
+
+  // test print
+  EXPECT_NO_THROW(print_C3D4_nodal_info(&info1));
+
+  C3D4NodalInfo info2 =
+      create_C3D4_nodal_info(12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1);
+  C3D4NodalInfo info_res = C3D4_nodal_info_add(&info1, &info2);
+  EXPECT_EQ(info_res.node1_dof1, 13);
+  EXPECT_EQ(info_res.node1_dof2, 13);
+  EXPECT_EQ(info_res.node1_dof3, 13);
+  EXPECT_EQ(info_res.node2_dof1, 13);
+  EXPECT_EQ(info_res.node2_dof2, 13);
+  EXPECT_EQ(info_res.node2_dof3, 13);
+  EXPECT_EQ(info_res.node3_dof1, 13);
+  EXPECT_EQ(info_res.node3_dof2, 13);
+  EXPECT_EQ(info_res.node3_dof3, 13);
+  EXPECT_EQ(info_res.node4_dof1, 13);
+  EXPECT_EQ(info_res.node4_dof2, 13);
+  EXPECT_EQ(info_res.node4_dof3, 13);
+
+  // transfer to vector 12D
+  Vector12D vec = C3D4_nodal_info_to_vector_12D(&info1);
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {
+    EXPECT_EQ(vector_12D_get_element(&vec, i), i + 1);
+  }
+
+  // transfer from vector12D
+  C3D4NodalInfo info3 = vector_12D_to_C3D4_nodal_info(&vec);
+  EXPECT_EQ(info1.node1_dof1, 1);
+  EXPECT_EQ(info1.node1_dof2, 2);
+  EXPECT_EQ(info1.node1_dof3, 3);
+  EXPECT_EQ(info1.node2_dof1, 4);
+  EXPECT_EQ(info1.node2_dof2, 5);
+  EXPECT_EQ(info1.node2_dof3, 6);
+  EXPECT_EQ(info1.node3_dof1, 7);
+  EXPECT_EQ(info1.node3_dof2, 8);
+  EXPECT_EQ(info1.node3_dof3, 9);
+  EXPECT_EQ(info1.node4_dof1, 10);
+  EXPECT_EQ(info1.node4_dof2, 11);
+  EXPECT_EQ(info1.node4_dof3, 12);
+}
+
+TEST(MechanicsTest, C3D4NodalDispToF) {
+  C3D4NodalInfo X = create_C3D4_nodal_info(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1);
+
+  // translation
+  C3D4NodalInfo test_displacement1 = create_C3D4_nodal_info(
+      0.5, -0.3, 0.2, 0.5, -0.3, 0.2, 0.5, -0.3, 0.2, 0.5, -0.3, 0.2);
+  Matrix3D F1 = C3D4_nodal_disp_to_3D_F(&X, &test_displacement1);
+  Eigen::Matrix3d F1_expected;
+  F1_expected << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+  EXPECT_EQ(to_eigen(F1), F1_expected);
+
+  // uniform stretch
+  C3D4NodalInfo test_displacement2 =
+      create_C3D4_nodal_info(0, 0, 0, 0.1, 0, 0, 0, 0, 0, 0, 0, 0);
+  Matrix3D F2 = C3D4_nodal_disp_to_3D_F(&X, &test_displacement2);
+  Eigen::Matrix3d F2_expected;
+  F2_expected << 1.1, 0, 0, 0, 1, 0, 0, 0, 1;
+  EXPECT_EQ(to_eigen(F2), F2_expected);
+
+  // pure shear
+  C3D4NodalInfo test_displacement3 =
+      create_C3D4_nodal_info(0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0);
+  Matrix3D F3 = C3D4_nodal_disp_to_3D_F(&X, &test_displacement3);
+  Eigen::Matrix3d F3_expected;
+  F3_expected << 1, 0.2, 0, 0, 1, 0, 0, 0, 1;
+  EXPECT_EQ(to_eigen(F3), F3_expected);
+
+  // pure rotate
+  C3D4NodalInfo test_displacement4 =
+      create_C3D4_nodal_info(0, 0, 0, -0.134, 0.5, 0, -0.5, -0.134, 0, 0, 0, 0);
+  Matrix3D F4 = C3D4_nodal_disp_to_3D_F(&X, &test_displacement4);
+  Eigen::Matrix3d F4_expected;
+  F4_expected << 0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1;
+  EXPECT_EQ(to_eigen(F4), F4_expected);
+
+  // complicated deformation
+  C3D4NodalInfo test_displacement5 =
+      create_C3D4_nodal_info(0, 0, 0, 0.1, 0, 0, 0.2, 0, 0, 0, 0, 0.05);
+  Matrix3D F5 = C3D4_nodal_disp_to_3D_F(&X, &test_displacement5);
+  Eigen::Matrix3d F5_expected;
+  F5_expected << 1.1, 0.2, 0, 0, 1, 0, 0, 0, 1.05;
+  EXPECT_EQ(to_eigen(F5), F5_expected);
+
+  // more complicated deformation
+  X = create_C3D4_nodal_info(0, 0, 100, 100, 0, 0, 100, 0, 100, 0, 100, 100);
+  C3D4NodalInfo test_displacement6 =
+      create_C3D4_nodal_info(0, 0, 0, -8, 10, 15, 0, 20, 0, 5, -10, 0);
+  Matrix3D F6 = C3D4_nodal_disp_to_3D_F(&X, &test_displacement6);
+  Eigen::Matrix3d F6_expected;
+  F6_expected << 1, 0.2, 2e-36, 0.05, 0.9, -1e-36, 0.08, 0.1, 0.85;
+  EXPECT_TRUE(to_eigen(F6).isApprox(F6_expected.transpose(), ZERO_TOLERANCE));
+}
+
+TEST(VoigtConversionTest, SymmetricConversion) {
+  Matrix3D m = create_matrix_3D(1.0, 2.0, 3.0, 2.0, 4.0, 5.0, 3.0, 5.0, 6.0);
+  Vector6D v = voigt_3D_matrix_to_6D_vector(&m);
+  EXPECT_EQ(v.data[0], 1.0);  // xx
+  EXPECT_EQ(v.data[1], 4.0);  // yy
+  EXPECT_EQ(v.data[2], 6.0);  // zz
+  EXPECT_EQ(v.data[3], 5.0);  // yz
+  EXPECT_EQ(v.data[4], 3.0);  // xz
+  EXPECT_EQ(v.data[5], 2.0);  // xy
+
+  Matrix3D m2 = voigt_6D_vector_to_3D_matrix(&v);
+  EXPECT_EQ(m2.data[0][0], 1.0);
+  EXPECT_EQ(m2.data[0][1], 2.0);
+  EXPECT_EQ(m2.data[0][2], 3.0);
+  EXPECT_EQ(m2.data[1][0], 2.0);
+  EXPECT_EQ(m2.data[1][1], 4.0);
+  EXPECT_EQ(m2.data[1][2], 5.0);
+  EXPECT_EQ(m2.data[2][0], 3.0);
+  EXPECT_EQ(m2.data[2][1], 5.0);
+  EXPECT_EQ(m2.data[2][2], 6.0);
+}
+
+TEST(VoigtConversionDeathTest, NonSymmetricMatrix) {
+  Matrix3D m = create_matrix_3D(1.0, 2.0, 3.0, 2.5, 4.0, 5.0, 3.0, 5.0, 6.0);
+  EXPECT_DEATH({ Vector6D v = voigt_3D_matrix_to_6D_vector(&m); }, "FATAL");
+}
+
+TEST(MechanicsTest, ComputeC3D4Volume) {
+  C3D4NodalInfo info =
+      create_C3D4_nodal_info(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1);
+  double volume = compute_C3D4_element_volume(&info);
+  EXPECT_EQ(volume, 1.0 / 6.0);
+
+  info = create_C3D4_nodal_info(0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0);
+  volume = compute_C3D4_element_volume(&info);
+  EXPECT_EQ(volume, 0);
+
+  info = create_C3D4_nodal_info(0.5, 1.2, -3.1, 2.3, 0.7, 1.8, -1.2, 2.6, 0.5,
+                                1, -0.8, 2.4);
+  volume = compute_C3D4_element_volume(&info);
+  EXPECT_NEAR(volume, 5.74583333333333, MECHANICS_TOLERANCE);
 }
