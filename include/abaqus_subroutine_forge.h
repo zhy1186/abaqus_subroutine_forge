@@ -1448,13 +1448,14 @@ Matrix12D matrix_B126_mul_matrix_B612(const MatrixB126* mat_b126,
   return result;
 }
 
-Vector12D matrix_B126_mul_vector_6D(const MatrixB126* mat_b126, const Vector6D* vec_6d) {
+Vector12D matrix_B126_mul_vector_6D(const MatrixB126* mat_b126,
+                                    const Vector6D* vec_6d) {
   // Multiply a (12x6) matrix with a (6x1) vector to get a (12x1) vector
   Vector12D result = create_empty_vector_12D();
-  result.type = Vector12X1; // set the type for 12x1 vector
+  result.type = Vector12X1;                   // set the type for 12x1 vector
   for (int i = 0; i < DIMENSION_C3D4; ++i) {  // 12 rows
     double sum = 0.0;
-    for (int k = 0; k < DIMENSION6; ++k) {      // 6 columns
+    for (int k = 0; k < DIMENSION6; ++k) {  // 6 columns
       sum += mat_b126->data[i][k] * vec_6d->data[k];
     }
     result.data[i] = sum;
@@ -1894,6 +1895,65 @@ Matrix3D C3D4_nodal_disp_to_3D_F(const C3D4NodalInfo* X,
   return F;
 }
 
+Matrix6D C3D4_compute_material_matrix_D(double E, double nu) {
+  Matrix6D D;
+  D.type = Matrix6X6;
+
+  // Compute the common factor f = E/((1+nu)*(1-2*nu))
+  double f = E / ((1.0 + nu) * (1.0 - 2.0 * nu));
+
+  // Normal stiffness components:
+  double c1 = f * (1.0 - nu);  // for the diagonal entries (1,1), (2,2), (3,3)
+  double c2 =
+      f * nu;  // for the off-diagonal entries among the first three rows
+
+  // Shear stiffness components:
+  double c3 = E / (2.0 * (1.0 + nu));
+
+  // Fill the 6x6 D matrix in Voigt notation.
+  // Rows 0-2 correspond to normal stresses and strains.
+  D.data[0][0] = c1;
+  D.data[0][1] = c2;
+  D.data[0][2] = c2;
+  D.data[0][3] = 0.0;
+  D.data[0][4] = 0.0;
+  D.data[0][5] = 0.0;
+  D.data[1][0] = c2;
+  D.data[1][1] = c1;
+  D.data[1][2] = c2;
+  D.data[1][3] = 0.0;
+  D.data[1][4] = 0.0;
+  D.data[1][5] = 0.0;
+  D.data[2][0] = c2;
+  D.data[2][1] = c2;
+  D.data[2][2] = c1;
+  D.data[2][3] = 0.0;
+  D.data[2][4] = 0.0;
+  D.data[2][5] = 0.0;
+
+  // Rows 3-5 correspond to shear components.
+  D.data[3][0] = 0.0;
+  D.data[3][1] = 0.0;
+  D.data[3][2] = 0.0;
+  D.data[3][3] = c3;
+  D.data[3][4] = 0.0;
+  D.data[3][5] = 0.0;
+  D.data[4][0] = 0.0;
+  D.data[4][1] = 0.0;
+  D.data[4][2] = 0.0;
+  D.data[4][3] = 0.0;
+  D.data[4][4] = c3;
+  D.data[4][5] = 0.0;
+  D.data[5][0] = 0.0;
+  D.data[5][1] = 0.0;
+  D.data[5][2] = 0.0;
+  D.data[5][3] = 0.0;
+  D.data[5][4] = 0.0;
+  D.data[5][5] = c3;
+
+  return D;
+}
+
 double compute_C3D4_element_volume(const C3D4NodalInfo* coords) {
   double x1 = coords->node1_dof1;
   double y1 = coords->node1_dof2;
@@ -1927,6 +1987,174 @@ double compute_C3D4_element_volume(const C3D4NodalInfo* coords) {
   }
   double volume = det / 6.0;
   return volume;
+}
+
+// Computes the B matrix (6x12 strain-displacement matrix) for a C3D4
+// tetrahedral element. It computes the constant derivatives of the shape
+// functions based on nodal coordinates.
+MatrixB612 C3D4_compute_B_matrix(const C3D4NodalInfo* coords) {
+  MatrixB612 B;
+  B.type = MatrixB6X12;
+
+  // Compute the volume of the tetrahedral element.
+  double vol = compute_C3D4_element_volume(coords);
+  // Denominator in the shape function derivative formulas.
+  double denom = 6.0 * vol;
+
+  // Extract nodal coordinates for convenience.
+  double x1 = coords->node1_dof1, y1 = coords->node1_dof2,
+         z1 = coords->node1_dof3;
+  double x2 = coords->node2_dof1, y2 = coords->node2_dof2,
+         z2 = coords->node2_dof3;
+  double x3 = coords->node3_dof1, y3 = coords->node3_dof2,
+         z3 = coords->node3_dof3;
+  double x4 = coords->node4_dof1, y4 = coords->node4_dof2,
+         z4 = coords->node4_dof3;
+
+  // Compute the derivatives of the shape functions.
+  double dN1_dx = (y2 * (z3 - z4) + y3 * (z4 - z2) + y4 * (z2 - z3)) / denom;
+  double dN1_dy = (z2 * (x3 - x4) + z3 * (x4 - x2) + z4 * (x2 - x3)) / denom;
+  double dN1_dz = (x2 * (y3 - y4) + x3 * (y4 - y2) + x4 * (y2 - y3)) / denom;
+
+  double dN2_dx = (y3 * (z4 - z1) + y4 * (z1 - z3) + y1 * (z3 - z4)) / denom;
+  double dN2_dy = (z3 * (x4 - x1) + z4 * (x1 - x3) + z1 * (x3 - x4)) / denom;
+  double dN2_dz = (x3 * (y4 - y1) + x4 * (y1 - y3) + x1 * (y3 - y4)) / denom;
+
+  double dN3_dx = (y4 * (z1 - z2) + y1 * (z2 - z4) + y2 * (z4 - z1)) / denom;
+  double dN3_dy = (z4 * (x1 - x2) + z1 * (x2 - x4) + z2 * (x4 - x1)) / denom;
+  double dN3_dz = (x4 * (y1 - y2) + x1 * (y2 - y4) + x2 * (y4 - y1)) / denom;
+
+  double dN4_dx = (y1 * (z2 - z3) + y2 * (z3 - z1) + y3 * (z1 - z2)) / denom;
+  double dN4_dy = (z1 * (x2 - x3) + z2 * (x3 - x1) + z3 * (x1 - x2)) / denom;
+  double dN4_dz = (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / denom;
+
+  // Assemble the B matrix row by row.
+  // Row 0: [dN1_dx, 0, 0, dN2_dx, 0, 0, dN3_dx, 0, 0, dN4_dx, 0, 0]
+  B.data[0][0] = dN1_dx;
+  B.data[0][1] = 0.0;
+  B.data[0][2] = 0.0;
+  B.data[0][3] = dN2_dx;
+  B.data[0][4] = 0.0;
+  B.data[0][5] = 0.0;
+  B.data[0][6] = dN3_dx;
+  B.data[0][7] = 0.0;
+  B.data[0][8] = 0.0;
+  B.data[0][9] = dN4_dx;
+  B.data[0][10] = 0.0;
+  B.data[0][11] = 0.0;
+
+  // Row 1: [0, dN1_dy, 0, 0, dN2_dy, 0, 0, dN3_dy, 0, 0, dN4_dy, 0]
+  B.data[1][0] = 0.0;
+  B.data[1][1] = dN1_dy;
+  B.data[1][2] = 0.0;
+  B.data[1][3] = 0.0;
+  B.data[1][4] = dN2_dy;
+  B.data[1][5] = 0.0;
+  B.data[1][6] = 0.0;
+  B.data[1][7] = dN3_dy;
+  B.data[1][8] = 0.0;
+  B.data[1][9] = 0.0;
+  B.data[1][10] = dN4_dy;
+  B.data[1][11] = 0.0;
+
+  // Row 2: [0, 0, dN1_dz, 0, 0, dN2_dz, 0, 0, dN3_dz, 0, 0, dN4_dz]
+  B.data[2][0] = 0.0;
+  B.data[2][1] = 0.0;
+  B.data[2][2] = dN1_dz;
+  B.data[2][3] = 0.0;
+  B.data[2][4] = 0.0;
+  B.data[2][5] = dN2_dz;
+  B.data[2][6] = 0.0;
+  B.data[2][7] = 0.0;
+  B.data[2][8] = dN3_dz;
+  B.data[2][9] = 0.0;
+  B.data[2][10] = 0.0;
+  B.data[2][11] = dN4_dz;
+
+  // Row 3: [dN1_dy, dN1_dx, 0, dN2_dy, dN2_dx, 0, dN3_dy, dN3_dx, 0, dN4_dy,
+  // dN4_dx, 0]
+  B.data[3][0] = dN1_dy;
+  B.data[3][1] = dN1_dx;
+  B.data[3][2] = 0.0;
+  B.data[3][3] = dN2_dy;
+  B.data[3][4] = dN2_dx;
+  B.data[3][5] = 0.0;
+  B.data[3][6] = dN3_dy;
+  B.data[3][7] = dN3_dx;
+  B.data[3][8] = 0.0;
+  B.data[3][9] = dN4_dy;
+  B.data[3][10] = dN4_dx;
+  B.data[3][11] = 0.0;
+
+  // Row 4: [0, dN1_dz, dN1_dy, 0, dN2_dz, dN2_dy, 0, dN3_dz, dN3_dy, 0, dN4_dz,
+  // dN4_dy]
+  B.data[4][0] = 0.0;
+  B.data[4][1] = dN1_dz;
+  B.data[4][2] = dN1_dy;
+  B.data[4][3] = 0.0;
+  B.data[4][4] = dN2_dz;
+  B.data[4][5] = dN2_dy;
+  B.data[4][6] = 0.0;
+  B.data[4][7] = dN3_dz;
+  B.data[4][8] = dN3_dy;
+  B.data[4][9] = 0.0;
+  B.data[4][10] = dN4_dz;
+  B.data[4][11] = dN4_dy;
+
+  // Row 5: [dN1_dz, 0, dN1_dx, dN2_dz, 0, dN2_dx, dN3_dz, 0, dN3_dx, dN4_dz, 0,
+  // dN4_dx]
+  B.data[5][0] = dN1_dz;
+  B.data[5][1] = 0.0;
+  B.data[5][2] = dN1_dx;
+  B.data[5][3] = dN2_dz;
+  B.data[5][4] = 0.0;
+  B.data[5][5] = dN2_dx;
+  B.data[5][6] = dN3_dz;
+  B.data[5][7] = 0.0;
+  B.data[5][8] = dN3_dx;
+  B.data[5][9] = dN4_dz;
+  B.data[5][10] = 0.0;
+  B.data[5][11] = dN4_dx;
+
+  return B;
+}
+
+Matrix12D C3D4_compute_initial_element_stiffness_matrix(
+    const C3D4NodalInfo* coords, const Matrix6D* property, double volume) {
+  // Step 1: Compute the B matrix (6x12) from nodal coordinates.
+  MatrixB612 B = C3D4_compute_B_matrix(coords);
+
+  // Step 2: Compute BT, the transpose of B (12x6 matrix).
+  MatrixB126 BT = create_matrix_B126_from_B612(&B);
+
+  // Step 3: Multiply BT (12x6) by the property matrix (6x6) to form BT_D
+  // (12x6).
+  MatrixB126 BT_D = matrix_B126_mul_matrix_6D(&BT, property);
+
+  // Step 4: Multiply BT_D (12x6) by B (6x12) to get a 12x12 matrix.
+  Matrix12D K = matrix_B126_mul_matrix_B612(&BT_D, &B);
+
+  // Step 5: Scale the result by the element volume.
+  K = matrix_12D_number_multiplication(volume, &K);
+
+  return K;
+}
+
+C3D4NodalInfo C3D4_compute_inner_force(MatrixB612* B, Vector6D* sigma_voigt,
+                                       double volume) {
+  // Compute the transpose of B (B^T) using the provided helper.
+  MatrixB126 BT = create_matrix_B126_from_B612(B);
+
+  // Multiply BT (12x6) by sigma_voigt (6x1) to get a 12x1 vector.
+  Vector12D f_inner = matrix_B126_mul_vector_6D(&BT, sigma_voigt);
+
+  // Scale the resulting vector by the element volume.
+  for (double& i : f_inner.data) {
+    i *= volume;
+  }
+
+  // Convert the 12x1 vector to a C3D4NodalInfo structure.
+  return vector_12D_to_C3D4_nodal_info(&f_inner);
 }
 
 #pragma clang diagnostic pop

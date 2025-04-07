@@ -370,18 +370,18 @@ TEST(MechanicsTest, C3D4NodalInfo) {
 
   // transfer from vector12D
   C3D4NodalInfo info3 = vector_12D_to_C3D4_nodal_info(&vec);
-  EXPECT_EQ(info1.node1_dof1, 1);
-  EXPECT_EQ(info1.node1_dof2, 2);
-  EXPECT_EQ(info1.node1_dof3, 3);
-  EXPECT_EQ(info1.node2_dof1, 4);
-  EXPECT_EQ(info1.node2_dof2, 5);
-  EXPECT_EQ(info1.node2_dof3, 6);
-  EXPECT_EQ(info1.node3_dof1, 7);
-  EXPECT_EQ(info1.node3_dof2, 8);
-  EXPECT_EQ(info1.node3_dof3, 9);
-  EXPECT_EQ(info1.node4_dof1, 10);
-  EXPECT_EQ(info1.node4_dof2, 11);
-  EXPECT_EQ(info1.node4_dof3, 12);
+  EXPECT_EQ(info3.node1_dof1, 1);
+  EXPECT_EQ(info3.node1_dof2, 2);
+  EXPECT_EQ(info3.node1_dof3, 3);
+  EXPECT_EQ(info3.node2_dof1, 4);
+  EXPECT_EQ(info3.node2_dof2, 5);
+  EXPECT_EQ(info3.node2_dof3, 6);
+  EXPECT_EQ(info3.node3_dof1, 7);
+  EXPECT_EQ(info3.node3_dof2, 8);
+  EXPECT_EQ(info3.node3_dof3, 9);
+  EXPECT_EQ(info3.node4_dof1, 10);
+  EXPECT_EQ(info3.node4_dof2, 11);
+  EXPECT_EQ(info3.node4_dof3, 12);
 }
 
 TEST(MechanicsTest, C3D4NodalDispToF) {
@@ -478,4 +478,171 @@ TEST(MechanicsTest, ComputeC3D4Volume) {
                                 1, -0.8, 2.4);
   volume = compute_C3D4_element_volume(&info);
   EXPECT_NEAR(volume, 5.74583333333333, MECHANICS_TOLERANCE);
+}
+
+TEST(C3D4ComputeBMatrixTest, SimpleTetrahedron) {
+  // Define a simple tetrahedron with nodes:
+  // Node1: (0, 0, 0), Node2: (1, 0, 0), Node3: (0, 1, 0), Node4: (0, 0, 1)
+  C3D4NodalInfo tet = create_C3D4_nodal_info(
+      0.0, 0.0, 0.0,  // Node 1
+      1.0, 0.0, 0.0,  // Node 2
+      0.0, 1.0, 0.0,  // Node 3
+      0.0, 0.0, 1.0   // Node 4
+  );
+
+  // Compute the B matrix for the tetrahedron.
+  MatrixB612 B = C3D4_compute_B_matrix(&tet);
+
+  // Expected derivatives for the given tetrahedron:
+  // For Node 1: (1, 1, 1)
+  // For Node 2: (1, 0, 0)
+  // For Node 3: (0, -1, 0)
+  // For Node 4: (0, 0, 1)
+
+  // Check Row 0 (only x-derivatives)
+  EXPECT_NEAR(B.data[0][0], 1.0, 1e-10);   // dN1_dx
+  EXPECT_NEAR(B.data[0][3], 1.0, 1e-10);   // dN2_dx
+  EXPECT_NEAR(B.data[0][6], 0.0, 1e-10);   // dN3_dx
+  EXPECT_NEAR(B.data[0][9], 0.0, 1e-10);   // dN4_dx
+
+  // Check Row 1 (only y-derivatives)
+  EXPECT_NEAR(B.data[1][1], 1.0, 1e-10);   // dN1_dy
+  EXPECT_NEAR(B.data[1][4], 0.0, 1e-10);   // dN2_dy
+  EXPECT_NEAR(B.data[1][7], -1.0, 1e-10);  // dN3_dy
+  EXPECT_NEAR(B.data[1][10], 0.0, 1e-10);  // dN4_dy
+
+  // Check Row 2 (only z-derivatives)
+  EXPECT_NEAR(B.data[2][2], 1.0, 1e-10);   // dN1_dz
+  EXPECT_NEAR(B.data[2][5], 0.0, 1e-10);   // dN2_dz
+  EXPECT_NEAR(B.data[2][8], 0.0, 1e-10);   // dN3_dz
+  EXPECT_NEAR(B.data[2][11], 1.0, 1e-10);  // dN4_dz
+}
+
+TEST(C3D4InitialStiffnessTest, SimpleTetrahedronIdentityProperty) {
+  // Define a simple tetrahedron with nodes:
+  // Node1: (0, 0, 0)
+  // Node2: (1, 0, 0)
+  // Node3: (0, 1, 0)
+  // Node4: (0, 0, 1)
+  C3D4NodalInfo tet = create_C3D4_nodal_info(
+      0.0, 0.0, 0.0,   // Node 1
+      1.0, 0.0, 0.0,   // Node 2
+      0.0, 1.0, 0.0,   // Node 3
+      0.0, 0.0, 1.0    // Node 4
+  );
+
+  // Compute the volume of the tetrahedron; expected volume = 1/6.
+  double vol = compute_C3D4_element_volume(&tet);
+  EXPECT_NEAR(vol, 1.0 / 6.0, 1e-10);
+
+  // Create a 6x6 identity material property matrix.
+  Matrix6D prop;
+  prop.type = Matrix6X6;
+  for (int i = 0; i < DIMENSION_CPS3; ++i) {
+    for (int j = 0; j < DIMENSION_CPS3; ++j) {
+      prop.data[i][j] = (i == j) ? 1.0 : 0.0;
+    }
+  }
+
+  // Compute the initial element stiffness matrix.
+  Matrix12D K = C3D4_compute_initial_element_stiffness_matrix(&tet, &prop, vol);
+
+  // Check that the stiffness matrix is symmetric.
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {
+    for (int j = i; j < DIMENSION_C3D4; ++j) {
+      EXPECT_NEAR(K.data[i][j], K.data[j][i], 1e-10);
+    }
+  }
+
+  // Check that the stiffness matrix is not identically zero.
+  double sum = 0.0;
+  for (auto & i : K.data) {
+    for (double j : i) {
+      sum += std::fabs(j);
+    }
+  }
+  EXPECT_GT(sum, 0.0);
+}
+
+TEST(C3D4ElasticityMatrixTest, ComputeDMatrix) {
+  // Define material properties: E in Pa, nu dimensionless.
+  double E = 210e9;  // 210 GPa
+  double nu = 0.3;
+
+  // Compute the D matrix.
+  Matrix6D D = C3D4_compute_material_matrix_D(E, nu);
+
+  // Expected calculations:
+  // f = E / ((1+nu)*(1-2nu)) = 210e9 / (1.3*0.4) = 210e9 / 0.52 ≈ 4.0384615e11 Pa.
+  double f_expected = 210e9 / (1.3 * 0.4); // ~4.0384615e11
+
+  // c1 = f*(1 - nu) = 4.0384615e11*0.7 ≈ 2.826923e11 Pa.
+  double c1_expected = f_expected * (1.0 - nu);
+
+  // c2 = f*nu = 4.0384615e11*0.3 ≈ 1.211538e11 Pa.
+  double c2_expected = f_expected * nu;
+
+  // c3 = E/(2*(1+nu)) = 210e9 / 2.6 ≈ 80.76923e9 Pa.
+  double c3_expected = 210e9 / (2.0 * 1.3);
+
+  // Check a few representative entries.
+  EXPECT_NEAR(D.data[0][0], c1_expected, 1e8);
+  EXPECT_NEAR(D.data[0][1], c2_expected, 1e8);
+  EXPECT_NEAR(D.data[1][0], c2_expected, 1e8);
+  EXPECT_NEAR(D.data[3][3], c3_expected, 1e8);
+
+  // Additionally, check that off-diagonals in the shear part are zero.
+  EXPECT_NEAR(D.data[3][4], 0.0, 1e-10);
+  EXPECT_NEAR(D.data[4][3], 0.0, 1e-10);
+}
+
+TEST(C3D4ComputeInnerForceTest, SimpleCase) {
+  // Create a dummy B matrix (6x12) where each row r is filled with (r+1).
+  MatrixB612 B;
+  B.type = MatrixB6X12;
+  for (int i = 0; i < DIMENSION6; ++i) {           // 6 rows
+    for (int j = 0; j < DIMENSION_C3D4; ++j) {       // 12 columns
+      B.data[i][j] = i + 1;  // row 0 = 1, row 1 = 2, ... row 5 = 6
+    }
+  }
+
+  // Create a sigma_voigt vector (6x1) of all ones.
+  Vector6D sigma_voigt = create_vector_6D(1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
+
+  // Set the volume.
+  double volume = 2.0;
+
+  // Compute the inner force.
+  C3D4NodalInfo f_inner = C3D4_compute_inner_force(&B, &sigma_voigt, volume);
+
+  // Since BT is the transpose of B, each entry of the 12x1 vector equals
+  // the sum over row r from 0 to 5 of (B[r][column]).
+  // In our case, every column sum = 1+2+3+4+5+6 = 21.
+  // Then, f_inner (each entry) = volume * 21 = 2 * 21 = 42.
+  //
+  // The conversion from a 12x1 vector to C3D4NodalInfo maps the first 3 entries
+  // to node1, the next 3 to node2, and so on.
+
+  // Expected inner force for each dof is 42.
+  double expected = 42.0;
+
+  // Convert the nodal info back to a 12D vector for easy checking.
+  Vector12D f_inner_vec = create_empty_vector_12D();
+  // Manually assign for testing (assuming node ordering: node1: indices 0-2, node2: indices 3-5, etc.)
+  f_inner_vec.data[0] = f_inner.node1_dof1;
+  f_inner_vec.data[1] = f_inner.node1_dof2;
+  f_inner_vec.data[2] = f_inner.node1_dof3;
+  f_inner_vec.data[3] = f_inner.node2_dof1;
+  f_inner_vec.data[4] = f_inner.node2_dof2;
+  f_inner_vec.data[5] = f_inner.node2_dof3;
+  f_inner_vec.data[6] = f_inner.node3_dof1;
+  f_inner_vec.data[7] = f_inner.node3_dof2;
+  f_inner_vec.data[8] = f_inner.node3_dof3;
+  f_inner_vec.data[9] = f_inner.node4_dof1;
+  f_inner_vec.data[10] = f_inner.node4_dof2;
+  f_inner_vec.data[11] = f_inner.node4_dof3;
+
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {
+    EXPECT_NEAR(f_inner_vec.data[i], expected, 1e-10);
+  }
 }
