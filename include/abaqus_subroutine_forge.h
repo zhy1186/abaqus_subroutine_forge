@@ -37,7 +37,8 @@ typedef enum {
   MatrixB3X6,
   MatrixB6X3,
   MatrixB6X12,
-  MatrixB12X6
+  MatrixB12X6,
+  Matrix12X12
 } MatrixType;
 
 // Util functions
@@ -129,6 +130,370 @@ Matrix3D create_eye_matrix_3D() {
   return create_matrix_3D(1, 0, 0, 0, 1, 0, 0, 0, 1);
 }
 
+// Matrix of CPS3 Element stiffness matrix (6x6)
+typedef struct Matrix6D {
+  MatrixType type;
+  double data[DIMENSION_CPS3][DIMENSION_CPS3];
+} Matrix6D;
+
+void matrix_6D_print(const Matrix6D* mat) {
+  printf(
+      "Matrix6D (CPS3 element stiffness matrix): [[%f, %f, %f, %f, %f, %f], "
+      "[%f, %f, %f, %f, %f, %f], [%f, %f, %f, %f, %f, %f], [%f, %f, %f, %f, "
+      "%f, %f], [%f, %f, %f, %f, %f, %f], [%f, %f, %f, %f, %f, %f]\n",
+      mat->data[0][0], mat->data[0][1], mat->data[0][2], mat->data[0][3],
+      mat->data[0][4], mat->data[0][5], mat->data[1][0], mat->data[1][1],
+      mat->data[1][2], mat->data[1][3], mat->data[1][4], mat->data[1][5],
+      mat->data[2][0], mat->data[2][1], mat->data[2][2], mat->data[2][3],
+      mat->data[2][4], mat->data[2][5], mat->data[3][0], mat->data[3][1],
+      mat->data[3][2], mat->data[3][3], mat->data[3][4], mat->data[3][5],
+      mat->data[4][0], mat->data[4][1], mat->data[4][2], mat->data[4][3],
+      mat->data[4][4], mat->data[4][5], mat->data[5][0], mat->data[5][1],
+      mat->data[5][2], mat->data[5][3], mat->data[5][4], mat->data[5][5]);
+}
+
+Matrix6D create_matrix_6D(
+    double ele11, double ele12, double ele13, double ele14, double ele15,
+    double ele16, double ele21, double ele22, double ele23, double ele24,
+    double ele25, double ele26, double ele31, double ele32, double ele33,
+    double ele34, double ele35, double ele36, double ele41, double ele42,
+    double ele43, double ele44, double ele45, double ele46, double ele51,
+    double ele52, double ele53, double ele54, double ele55, double ele56,
+    double ele61, double ele62, double ele63, double ele64, double ele65,
+    double ele66) {
+  Matrix6D mat;
+  mat.type = Matrix6X6;
+  mat.data[0][0] = ele11;
+  mat.data[0][1] = ele12;
+  mat.data[0][2] = ele13;
+  mat.data[0][3] = ele14;
+  mat.data[0][4] = ele15;
+  mat.data[0][5] = ele16;
+  mat.data[1][0] = ele21;
+  mat.data[1][1] = ele22;
+  mat.data[1][2] = ele23;
+  mat.data[1][3] = ele24;
+  mat.data[1][4] = ele25;
+  mat.data[1][5] = ele26;
+  mat.data[2][0] = ele31;
+  mat.data[2][1] = ele32;
+  mat.data[2][2] = ele33;
+  mat.data[2][3] = ele34;
+  mat.data[2][4] = ele35;
+  mat.data[2][5] = ele36;
+  mat.data[3][0] = ele41;
+  mat.data[3][1] = ele42;
+  mat.data[3][2] = ele43;
+  mat.data[3][3] = ele44;
+  mat.data[3][4] = ele45;
+  mat.data[3][5] = ele46;
+  mat.data[4][0] = ele51;
+  mat.data[4][1] = ele52;
+  mat.data[4][2] = ele53;
+  mat.data[4][3] = ele54;
+  mat.data[4][4] = ele55;
+  mat.data[4][5] = ele56;
+  mat.data[5][0] = ele61;
+  mat.data[5][1] = ele62;
+  mat.data[5][2] = ele63;
+  mat.data[5][3] = ele64;
+  mat.data[5][4] = ele65;
+  mat.data[5][5] = ele66;
+  return mat;
+}
+
+Matrix6D create_empty_matrix_6D() {
+  return create_matrix_6D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+}
+
+double matrix_6D_get_element(const Matrix6D* mat, int row, int col) {
+  if (col < 0 || col >= DIMENSION_CPS3 || row < 0 || row >= DIMENSION_CPS3) {
+    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!\n", row, col);
+  }
+  return mat->data[row][col];
+}
+
+void matrix_6D_fill_abaqus_double_array(const Matrix6D* mat, double* dst) {
+  // i loops over rows
+  for (int i = 0; i < DIMENSION_CPS3; ++i) {
+    // j loops over cols
+    for (int j = 0; j < DIMENSION_CPS3; ++j) {
+      dst[i * DIMENSION_CPS3 + j] = matrix_6D_get_element(mat, i, j);
+    }
+  }
+}
+
+// Matrix of C3D4 element stiffness matrix 12 x 12
+typedef struct Matrix12D {
+  MatrixType type;
+  double data[DIMENSION_C3D4][DIMENSION_C3D4];
+} Matrix12D;
+
+void matrix_12D_print(const Matrix12D* mat) {
+  printf(
+      "Matrix12D (C3D4 element stiffness matrix): "
+      "[[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n",
+      mat->data[0][0], mat->data[0][1], mat->data[0][2], mat->data[0][3],
+      mat->data[0][4], mat->data[0][5], mat->data[0][6], mat->data[0][7],
+      mat->data[0][8], mat->data[0][9], mat->data[0][10], mat->data[0][11],
+      mat->data[1][0], mat->data[1][1], mat->data[1][2], mat->data[1][3],
+      mat->data[1][4], mat->data[1][5], mat->data[1][6], mat->data[1][7],
+      mat->data[1][8], mat->data[1][9], mat->data[1][10], mat->data[1][11],
+      mat->data[2][0], mat->data[2][1], mat->data[2][2], mat->data[2][3],
+      mat->data[2][4], mat->data[2][5], mat->data[2][6], mat->data[2][7],
+      mat->data[2][8], mat->data[2][9], mat->data[2][10], mat->data[2][11],
+      mat->data[3][0], mat->data[3][1], mat->data[3][2], mat->data[3][3],
+      mat->data[3][4], mat->data[3][5], mat->data[3][6], mat->data[3][7],
+      mat->data[3][8], mat->data[3][9], mat->data[3][10], mat->data[3][11],
+      mat->data[4][0], mat->data[4][1], mat->data[4][2], mat->data[4][3],
+      mat->data[4][4], mat->data[4][5], mat->data[4][6], mat->data[4][7],
+      mat->data[4][8], mat->data[4][9], mat->data[4][10], mat->data[4][11],
+      mat->data[5][0], mat->data[5][1], mat->data[5][2], mat->data[5][3],
+      mat->data[5][4], mat->data[5][5], mat->data[5][6], mat->data[5][7],
+      mat->data[5][8], mat->data[5][9], mat->data[5][10], mat->data[5][11],
+      mat->data[6][0], mat->data[6][1], mat->data[6][2], mat->data[6][3],
+      mat->data[6][4], mat->data[6][5], mat->data[6][6], mat->data[6][7],
+      mat->data[6][8], mat->data[6][9], mat->data[6][10], mat->data[6][11],
+      mat->data[7][0], mat->data[7][1], mat->data[7][2], mat->data[7][3],
+      mat->data[7][4], mat->data[7][5], mat->data[7][6], mat->data[7][7],
+      mat->data[7][8], mat->data[7][9], mat->data[7][10], mat->data[7][11],
+      mat->data[8][0], mat->data[8][1], mat->data[8][2], mat->data[8][3],
+      mat->data[8][4], mat->data[8][5], mat->data[8][6], mat->data[8][7],
+      mat->data[8][8], mat->data[8][9], mat->data[8][10], mat->data[8][11],
+      mat->data[9][0], mat->data[9][1], mat->data[9][2], mat->data[9][3],
+      mat->data[9][4], mat->data[9][5], mat->data[9][6], mat->data[9][7],
+      mat->data[9][8], mat->data[9][9], mat->data[9][10], mat->data[9][11],
+      mat->data[10][0], mat->data[10][1], mat->data[10][2], mat->data[10][3],
+      mat->data[10][4], mat->data[10][5], mat->data[10][6], mat->data[10][7],
+      mat->data[10][8], mat->data[10][9], mat->data[10][10], mat->data[10][11],
+      mat->data[11][0], mat->data[11][1], mat->data[11][2], mat->data[11][3],
+      mat->data[11][4], mat->data[11][5], mat->data[11][6], mat->data[11][7],
+      mat->data[11][8], mat->data[11][9], mat->data[11][10], mat->data[11][11]);
+}
+
+Matrix12D create_matrix_12D(
+    double ele11, double ele12, double ele13, double ele14, double ele15,
+    double ele16, double ele17, double ele18, double ele19, double ele1_10,
+    double ele1_11, double ele1_12, double ele21, double ele22, double ele23,
+    double ele24, double ele25, double ele26, double ele27, double ele28,
+    double ele29, double ele2_10, double ele2_11, double ele2_12, double ele31,
+    double ele32, double ele33, double ele34, double ele35, double ele36,
+    double ele37, double ele38, double ele39, double ele3_10, double ele3_11,
+    double ele3_12, double ele41, double ele42, double ele43, double ele44,
+    double ele45, double ele46, double ele47, double ele48, double ele49,
+    double ele4_10, double ele4_11, double ele4_12, double ele51, double ele52,
+    double ele53, double ele54, double ele55, double ele56, double ele57,
+    double ele58, double ele59, double ele5_10, double ele5_11, double ele5_12,
+    double ele61, double ele62, double ele63, double ele64, double ele65,
+    double ele66, double ele67, double ele68, double ele69, double ele6_10,
+    double ele6_11, double ele6_12, double ele71, double ele72, double ele73,
+    double ele74, double ele75, double ele76, double ele77, double ele78,
+    double ele79, double ele7_10, double ele7_11, double ele7_12, double ele81,
+    double ele82, double ele83, double ele84, double ele85, double ele86,
+    double ele87, double ele88, double ele89, double ele8_10, double ele8_11,
+    double ele8_12, double ele91, double ele92, double ele93, double ele94,
+    double ele95, double ele96, double ele97, double ele98, double ele99,
+    double ele9_10, double ele9_11, double ele9_12, double ele10_1,
+    double ele10_2, double ele10_3, double ele10_4, double ele10_5,
+    double ele10_6, double ele10_7, double ele10_8, double ele10_9,
+    double ele10_10, double ele10_11, double ele10_12, double ele11_1,
+    double ele11_2, double ele11_3, double ele11_4, double ele11_5,
+    double ele11_6, double ele11_7, double ele11_8, double ele11_9,
+    double ele11_10, double ele11_11, double ele11_12, double ele12_1,
+    double ele12_2, double ele12_3, double ele12_4, double ele12_5,
+    double ele12_6, double ele12_7, double ele12_8, double ele12_9,
+    double ele12_10, double ele12_11, double ele12_12) {
+  Matrix12D mat;
+  mat.type = Matrix12X12;
+
+  mat.data[0][0] = ele11;
+  mat.data[0][1] = ele12;
+  mat.data[0][2] = ele13;
+  mat.data[0][3] = ele14;
+  mat.data[0][4] = ele15;
+  mat.data[0][5] = ele16;
+  mat.data[0][6] = ele17;
+  mat.data[0][7] = ele18;
+  mat.data[0][8] = ele19;
+  mat.data[0][9] = ele1_10;
+  mat.data[0][10] = ele1_11;
+  mat.data[0][11] = ele1_12;
+
+  mat.data[1][0] = ele21;
+  mat.data[1][1] = ele22;
+  mat.data[1][2] = ele23;
+  mat.data[1][3] = ele24;
+  mat.data[1][4] = ele25;
+  mat.data[1][5] = ele26;
+  mat.data[1][6] = ele27;
+  mat.data[1][7] = ele28;
+  mat.data[1][8] = ele29;
+  mat.data[1][9] = ele2_10;
+  mat.data[1][10] = ele2_11;
+  mat.data[1][11] = ele2_12;
+
+  mat.data[2][0] = ele31;
+  mat.data[2][1] = ele32;
+  mat.data[2][2] = ele33;
+  mat.data[2][3] = ele34;
+  mat.data[2][4] = ele35;
+  mat.data[2][5] = ele36;
+  mat.data[2][6] = ele37;
+  mat.data[2][7] = ele38;
+  mat.data[2][8] = ele39;
+  mat.data[2][9] = ele3_10;
+  mat.data[2][10] = ele3_11;
+  mat.data[2][11] = ele3_12;
+
+  mat.data[3][0] = ele41;
+  mat.data[3][1] = ele42;
+  mat.data[3][2] = ele43;
+  mat.data[3][3] = ele44;
+  mat.data[3][4] = ele45;
+  mat.data[3][5] = ele46;
+  mat.data[3][6] = ele47;
+  mat.data[3][7] = ele48;
+  mat.data[3][8] = ele49;
+  mat.data[3][9] = ele4_10;
+  mat.data[3][10] = ele4_11;
+  mat.data[3][11] = ele4_12;
+
+  mat.data[4][0] = ele51;
+  mat.data[4][1] = ele52;
+  mat.data[4][2] = ele53;
+  mat.data[4][3] = ele54;
+  mat.data[4][4] = ele55;
+  mat.data[4][5] = ele56;
+  mat.data[4][6] = ele57;
+  mat.data[4][7] = ele58;
+  mat.data[4][8] = ele59;
+  mat.data[4][9] = ele5_10;
+  mat.data[4][10] = ele5_11;
+  mat.data[4][11] = ele5_12;
+
+  mat.data[5][0] = ele61;
+  mat.data[5][1] = ele62;
+  mat.data[5][2] = ele63;
+  mat.data[5][3] = ele64;
+  mat.data[5][4] = ele65;
+  mat.data[5][5] = ele66;
+  mat.data[5][6] = ele67;
+  mat.data[5][7] = ele68;
+  mat.data[5][8] = ele69;
+  mat.data[5][9] = ele6_10;
+  mat.data[5][10] = ele6_11;
+  mat.data[5][11] = ele6_12;
+
+  mat.data[6][0] = ele71;
+  mat.data[6][1] = ele72;
+  mat.data[6][2] = ele73;
+  mat.data[6][3] = ele74;
+  mat.data[6][4] = ele75;
+  mat.data[6][5] = ele76;
+  mat.data[6][6] = ele77;
+  mat.data[6][7] = ele78;
+  mat.data[6][8] = ele79;
+  mat.data[6][9] = ele7_10;
+  mat.data[6][10] = ele7_11;
+  mat.data[6][11] = ele7_12;
+
+  mat.data[7][0] = ele81;
+  mat.data[7][1] = ele82;
+  mat.data[7][2] = ele83;
+  mat.data[7][3] = ele84;
+  mat.data[7][4] = ele85;
+  mat.data[7][5] = ele86;
+  mat.data[7][6] = ele87;
+  mat.data[7][7] = ele88;
+  mat.data[7][8] = ele89;
+  mat.data[7][9] = ele8_10;
+  mat.data[7][10] = ele8_11;
+  mat.data[7][11] = ele8_12;
+
+  mat.data[8][0] = ele91;
+  mat.data[8][1] = ele92;
+  mat.data[8][2] = ele93;
+  mat.data[8][3] = ele94;
+  mat.data[8][4] = ele95;
+  mat.data[8][5] = ele96;
+  mat.data[8][6] = ele97;
+  mat.data[8][7] = ele98;
+  mat.data[8][8] = ele99;
+  mat.data[8][9] = ele9_10;
+  mat.data[8][10] = ele9_11;
+  mat.data[8][11] = ele9_12;
+
+  mat.data[9][0] = ele10_1;
+  mat.data[9][1] = ele10_2;
+  mat.data[9][2] = ele10_3;
+  mat.data[9][3] = ele10_4;
+  mat.data[9][4] = ele10_5;
+  mat.data[9][5] = ele10_6;
+  mat.data[9][6] = ele10_7;
+  mat.data[9][7] = ele10_8;
+  mat.data[9][8] = ele10_9;
+  mat.data[9][9] = ele10_10;
+  mat.data[9][10] = ele10_11;
+  mat.data[9][11] = ele10_12;
+
+  mat.data[10][0] = ele11_1;
+  mat.data[10][1] = ele11_2;
+  mat.data[10][2] = ele11_3;
+  mat.data[10][3] = ele11_4;
+  mat.data[10][4] = ele11_5;
+  mat.data[10][5] = ele11_6;
+  mat.data[10][6] = ele11_7;
+  mat.data[10][7] = ele11_8;
+  mat.data[10][8] = ele11_9;
+  mat.data[10][9] = ele11_10;
+  mat.data[10][10] = ele11_11;
+  mat.data[10][11] = ele11_12;
+
+  mat.data[11][0] = ele12_1;
+  mat.data[11][1] = ele12_2;
+  mat.data[11][2] = ele12_3;
+  mat.data[11][3] = ele12_4;
+  mat.data[11][4] = ele12_5;
+  mat.data[11][5] = ele12_6;
+  mat.data[11][6] = ele12_7;
+  mat.data[11][7] = ele12_8;
+  mat.data[11][8] = ele12_9;
+  mat.data[11][9] = ele12_10;
+  mat.data[11][10] = ele12_11;
+  mat.data[11][11] = ele12_12;
+
+  return mat;
+}
+
+Matrix12D create_empty_matrix_12D() {
+  return create_matrix_12D(
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+}
+
+double matrix_12D_get_element(const Matrix12D* mat, int row, int col) {
+  if (col < 0 || col >= DIMENSION_C3D4 || row < 0 || row >= DIMENSION_C3D4) {
+    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!\n", row, col);
+  }
+  return mat->data[row][col];
+}
+
 // Vector 2D -- use in 2D vector
 typedef struct Vector2D {
   MatrixType type;
@@ -183,6 +548,91 @@ Vector3D create_vector_3D(double ele11, double ele21, double ele31) {
 }
 
 Vector3D create_empty_vector_3D() { return create_vector_3D(0, 0, 0); }
+
+// Vector 6 x 1 used by CPS3NodalInfo
+typedef struct Vector6D {
+  MatrixType type;
+  double data[DIMENSION_CPS3];
+} Vector6D;
+
+void vector_6D_print(const Vector6D* mat) {
+  printf("Vector6D: [%f, %f, %f, %f, %f, %f]\n", mat->data[0], mat->data[1],
+         mat->data[2], mat->data[3], mat->data[4], mat->data[5]);
+}
+
+double vector_6D_get_element(const Vector6D* mat, int row) {
+  if (row < 0 || row >= DIMENSION_CPS3) {
+    fatal_error("FATAL: Index out of bounds (row: %d)!\n", row);
+  }
+  return mat->data[row];
+}
+
+Vector6D create_vector_6D(double ele11, double ele21, double ele31,
+                          double ele41, double ele51, double ele61) {
+  Vector6D vec;
+  vec.type = Vector6X1;
+  vec.data[0] = ele11;
+  vec.data[1] = ele21;
+  vec.data[2] = ele31;
+  vec.data[3] = ele41;
+  vec.data[4] = ele51;
+  vec.data[5] = ele61;
+  return vec;
+}
+
+Vector6D create_empty_vector_6D() { return create_vector_6D(0, 0, 0, 0, 0, 0); }
+
+void vector_6D_fill_abaqus_double_array(const Vector6D* vec, double* dst) {
+  for (int i = 0; i < DIMENSION_CPS3; ++i) {
+    dst[i] = vector_6D_get_element(vec, i);
+  }
+}
+
+// Vector 12 x 1 -- use for basic C3D4 vector
+typedef struct Vector12D {
+  MatrixType type;
+  double data[DIMENSION_C3D4];
+} Vector12D;
+
+void vector_12D_print(const Vector12D* vec) {
+  printf("Vector12D: [%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n",
+         vec->data[0], vec->data[1], vec->data[2], vec->data[3], vec->data[4],
+         vec->data[5], vec->data[6], vec->data[7], vec->data[8], vec->data[9],
+         vec->data[10], vec->data[11]);
+}
+
+double vector_12D_get_element(const Vector12D* vec, int idx) {
+  if (idx < 0 || idx >= DIMENSION_C3D4) {
+    fatal_error("FATAL: Index out of bounds (index: %d)!", idx);
+  }
+  return vec->data[idx];
+}
+
+Vector12D create_vector_12D(double ele1, double ele2, double ele3, double ele4,
+                            double ele5, double ele6, double ele7, double ele8,
+                            double ele9, double ele10, double ele11,
+                            double ele12) {
+  Vector12D vec;
+  vec.type = Vector12X1;
+  vec.data[0] = ele1;
+  vec.data[1] = ele2;
+  vec.data[2] = ele3;
+  vec.data[3] = ele4;
+  vec.data[4] = ele5;
+  vec.data[5] = ele6;
+  vec.data[6] = ele7;
+  vec.data[7] = ele8;
+  vec.data[8] = ele9;
+  vec.data[9] = ele10;
+  vec.data[10] = ele11;
+  vec.data[11] = ele12;
+
+  return vec;
+}
+
+Vector12D create_empty_vector_12D() {
+  return create_vector_12D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+}
 
 // Matrix definition for CPS3 element matrix B
 typedef struct MatrixB36 {
@@ -561,185 +1011,6 @@ MatrixB126 create_matrix_B126_from_B612(MatrixB612* mat_b612) {
 MatrixB126 matrix_B612_transpose(MatrixB612* mat_b612) {
   MatrixB126 mat_b126 = create_matrix_B126_from_B612(mat_b612);
   return mat_b126;
-}
-
-// Matrix of CPS3 Element stiffness matrix (6x6)
-typedef struct Matrix6D {
-  MatrixType type;
-  double data[DIMENSION_CPS3][DIMENSION_CPS3];
-} Matrix6D;
-
-void matrix_6D_print(const Matrix6D* mat) {
-  printf(
-      "Matrix6D (CPS3 element stiffness matrix): [[%f, %f, %f, %f, %f, %f], "
-      "[%f, %f, %f, %f, %f, %f], [%f, %f, %f, %f, %f, %f], [%f, %f, %f, %f, "
-      "%f, %f], [%f, %f, %f, %f, %f, %f], [%f, %f, %f, %f, %f, %f]\n",
-      mat->data[0][0], mat->data[0][1], mat->data[0][2], mat->data[0][3],
-      mat->data[0][4], mat->data[0][5], mat->data[1][0], mat->data[1][1],
-      mat->data[1][2], mat->data[1][3], mat->data[1][4], mat->data[1][5],
-      mat->data[2][0], mat->data[2][1], mat->data[2][2], mat->data[2][3],
-      mat->data[2][4], mat->data[2][5], mat->data[3][0], mat->data[3][1],
-      mat->data[3][2], mat->data[3][3], mat->data[3][4], mat->data[3][5],
-      mat->data[4][0], mat->data[4][1], mat->data[4][2], mat->data[4][3],
-      mat->data[4][4], mat->data[4][5], mat->data[5][0], mat->data[5][1],
-      mat->data[5][2], mat->data[5][3], mat->data[5][4], mat->data[5][5]);
-}
-
-Matrix6D create_matrix_6D(
-    double ele11, double ele12, double ele13, double ele14, double ele15,
-    double ele16, double ele21, double ele22, double ele23, double ele24,
-    double ele25, double ele26, double ele31, double ele32, double ele33,
-    double ele34, double ele35, double ele36, double ele41, double ele42,
-    double ele43, double ele44, double ele45, double ele46, double ele51,
-    double ele52, double ele53, double ele54, double ele55, double ele56,
-    double ele61, double ele62, double ele63, double ele64, double ele65,
-    double ele66) {
-  Matrix6D mat;
-  mat.type = Matrix6X6;
-  mat.data[0][0] = ele11;
-  mat.data[0][1] = ele12;
-  mat.data[0][2] = ele13;
-  mat.data[0][3] = ele14;
-  mat.data[0][4] = ele15;
-  mat.data[0][5] = ele16;
-  mat.data[1][0] = ele21;
-  mat.data[1][1] = ele22;
-  mat.data[1][2] = ele23;
-  mat.data[1][3] = ele24;
-  mat.data[1][4] = ele25;
-  mat.data[1][5] = ele26;
-  mat.data[2][0] = ele31;
-  mat.data[2][1] = ele32;
-  mat.data[2][2] = ele33;
-  mat.data[2][3] = ele34;
-  mat.data[2][4] = ele35;
-  mat.data[2][5] = ele36;
-  mat.data[3][0] = ele41;
-  mat.data[3][1] = ele42;
-  mat.data[3][2] = ele43;
-  mat.data[3][3] = ele44;
-  mat.data[3][4] = ele45;
-  mat.data[3][5] = ele46;
-  mat.data[4][0] = ele51;
-  mat.data[4][1] = ele52;
-  mat.data[4][2] = ele53;
-  mat.data[4][3] = ele54;
-  mat.data[4][4] = ele55;
-  mat.data[4][5] = ele56;
-  mat.data[5][0] = ele61;
-  mat.data[5][1] = ele62;
-  mat.data[5][2] = ele63;
-  mat.data[5][3] = ele64;
-  mat.data[5][4] = ele65;
-  mat.data[5][5] = ele66;
-  return mat;
-}
-
-Matrix6D create_empty_matrix_6D() {
-  return create_matrix_6D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-}
-
-double matrix_6D_get_element(const Matrix6D* mat, int row, int col) {
-  if (col < 0 || col >= DIMENSION_CPS3 || row < 0 || row >= DIMENSION_CPS3) {
-    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!\n", row, col);
-  }
-  return mat->data[row][col];
-}
-
-void matrix_6D_fill_abaqus_double_array(const Matrix6D* mat, double* dst) {
-  // i loops over rows
-  for (int i = 0; i < DIMENSION_CPS3; ++i) {
-    // j loops over cols
-    for (int j = 0; j < DIMENSION_CPS3; ++j) {
-      dst[i * DIMENSION_CPS3 + j] = matrix_6D_get_element(mat, i, j);
-    }
-  }
-}
-
-// Vector 6 x 1 used by CPS3NodalInfo
-typedef struct Vector6D {
-  MatrixType type;
-  double data[DIMENSION_CPS3];
-} Vector6D;
-
-void vector_6D_print(const Vector6D* mat) {
-  printf("Vector6D: [%f, %f, %f, %f, %f, %f]\n", mat->data[0], mat->data[1],
-         mat->data[2], mat->data[3], mat->data[4], mat->data[5]);
-}
-
-double vector_6D_get_element(const Vector6D* mat, int row) {
-  if (row < 0 || row >= DIMENSION_CPS3) {
-    fatal_error("FATAL: Index out of bounds (row: %d)!\n", row);
-  }
-  return mat->data[row];
-}
-
-Vector6D create_vector_6D(double ele11, double ele21, double ele31,
-                          double ele41, double ele51, double ele61) {
-  Vector6D vec;
-  vec.type = Vector6X1;
-  vec.data[0] = ele11;
-  vec.data[1] = ele21;
-  vec.data[2] = ele31;
-  vec.data[3] = ele41;
-  vec.data[4] = ele51;
-  vec.data[5] = ele61;
-  return vec;
-}
-
-Vector6D create_empty_vector_6D() { return create_vector_6D(0, 0, 0, 0, 0, 0); }
-
-void vector_6D_fill_abaqus_double_array(const Vector6D* vec, double* dst) {
-  for (int i = 0; i < DIMENSION_CPS3; ++i) {
-    dst[i] = vector_6D_get_element(vec, i);
-  }
-}
-
-// Vector 12 x 1 -- use for basic C3D4 vector
-typedef struct Vector12D {
-  MatrixType type;
-  double data[DIMENSION_C3D4];
-} Vector12D;
-
-void vector_12D_print(const Vector12D* vec) {
-  printf("Vector12D: [%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]\n",
-         vec->data[0], vec->data[1], vec->data[2], vec->data[3], vec->data[4],
-         vec->data[5], vec->data[6], vec->data[7], vec->data[8], vec->data[9],
-         vec->data[10], vec->data[11]);
-}
-
-double vector_12D_get_element(const Vector12D* vec, int idx) {
-  if (idx < 0 || idx >= DIMENSION_C3D4) {
-    fatal_error("FATAL: Index out of bounds (index: %d)!", idx);
-  }
-  return vec->data[idx];
-}
-
-Vector12D create_vector_12D(double ele1, double ele2, double ele3, double ele4,
-                            double ele5, double ele6, double ele7, double ele8,
-                            double ele9, double ele10, double ele11,
-                            double ele12) {
-  Vector12D vec;
-  vec.type = Vector12X1;
-  vec.data[0] = ele1;
-  vec.data[1] = ele2;
-  vec.data[2] = ele3;
-  vec.data[3] = ele4;
-  vec.data[4] = ele5;
-  vec.data[5] = ele6;
-  vec.data[6] = ele7;
-  vec.data[7] = ele8;
-  vec.data[8] = ele9;
-  vec.data[9] = ele10;
-  vec.data[10] = ele11;
-  vec.data[11] = ele12;
-
-  return vec;
-}
-
-Vector12D create_empty_vector_12D() {
-  return create_vector_12D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 // Mathematica matrix operator (transpose add minus num_mul)
