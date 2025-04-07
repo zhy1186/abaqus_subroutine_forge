@@ -1152,6 +1152,17 @@ Matrix6D matrix_6D_minus(const Matrix6D* matrix_a, const Matrix6D* matrix_b) {
   return matrix_6D_add(matrix_a, &minus_matrix_b);
 }
 
+Matrix12D matrix_12D_number_multiplication(double num, const Matrix12D* mat) {
+  Matrix12D result;
+  result.type = Matrix12X12;
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {
+    for (int j = 0; j < DIMENSION_C3D4; ++j) {
+      result.data[i][j] = num * mat->data[i][j];
+    }
+  }
+  return result;
+}
+
 Vector2D vector_2D_add(const Vector2D* vector_a, const Vector2D* vector_b) {
   return create_vector_2D(vector_a->data[0] + vector_b->data[0],
                           vector_a->data[1] + vector_b->data[1]);
@@ -1401,6 +1412,52 @@ Matrix6D matrix_6D_mul_matrix_6D(const Matrix6D* mat1, const Matrix6D* mat2) {
         result.data[i][j] += mat1->data[i][k] * mat2->data[k][j];
       }
     }
+  }
+  return result;
+}
+
+MatrixB126 matrix_B126_mul_matrix_6D(const MatrixB126* mat_b126,
+                                     const Matrix6D* mat_6d) {
+  MatrixB126 result;
+  result.type = MatrixB12X6;
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {
+    for (int j = 0; j < DIMENSION6; ++j) {
+      result.data[i][j] = 0.0;
+      for (int k = 0; k < DIMENSION6; ++k) {
+        result.data[i][j] += mat_b126->data[i][k] * mat_6d->data[k][j];
+      }
+    }
+  }
+  return result;
+}
+
+Matrix12D matrix_B126_mul_matrix_B612(const MatrixB126* mat_b126,
+                                      const MatrixB612* mat_b612) {
+  Matrix12D result;
+  result.type = Matrix12X12;  // set the type to 12x12 matrix
+  // Multiply a (12x6) matrix with a (6x12) matrix to get a (12x12) matrix
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {    // 12 rows from MatrixB126
+    for (int j = 0; j < DIMENSION_C3D4; ++j) {  // 12 columns from MatrixB612
+      result.data[i][j] = 0.0;
+      for (int k = 0; k < DIMENSION6;
+           ++k) {  // 6 columns from MatrixB126 and 6 rows from MatrixB612
+        result.data[i][j] += mat_b126->data[i][k] * mat_b612->data[k][j];
+      }
+    }
+  }
+  return result;
+}
+
+Vector12D matrix_B126_mul_vector_6D(const MatrixB126* mat_b126, const Vector6D* vec_6d) {
+  // Multiply a (12x6) matrix with a (6x1) vector to get a (12x1) vector
+  Vector12D result = create_empty_vector_12D();
+  result.type = Vector12X1; // set the type for 12x1 vector
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {  // 12 rows
+    double sum = 0.0;
+    for (int k = 0; k < DIMENSION6; ++k) {      // 6 columns
+      sum += mat_b126->data[i][k] * vec_6d->data[k];
+    }
+    result.data[i] = sum;
   }
   return result;
 }

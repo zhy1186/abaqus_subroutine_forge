@@ -270,6 +270,40 @@ TEST(MechanicalMatrixTest, Matrix6DGetElementOutOfBound) {
                "FATAL: Index out of bounds \\(row: 6, col: 6\\)!");
 }
 
+TEST(MechanicalMatrixTest, Matrix12DGetElement) {
+  Matrix12D mat = create_matrix_12D(
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+      40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+      58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+      76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93,
+      94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+      110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124,
+      125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+      140, 141, 142, 143, 144);
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {
+    for (int j = 0; j < DIMENSION_C3D4; ++j) {
+      EXPECT_DOUBLE_EQ(matrix_12D_get_element(&mat, i, j), i * 12 + j + 1);
+    }
+  }
+
+  EXPECT_DEATH(matrix_12D_get_element(&mat, 6, 12),
+               "FATAL: Index out of bounds \\(row: 6, col: 12\\)!");
+  EXPECT_DEATH(matrix_12D_get_element(&mat, 12, 5),
+               "FATAL: Index out of bounds \\(row: 12, col: 5\\)!");
+  EXPECT_DEATH(matrix_12D_get_element(&mat, -1, 5),
+               "FATAL: Index out of bounds \\(row: -1, col: 5\\)!");
+  EXPECT_DEATH(matrix_12D_get_element(&mat, 7, -1),
+               "FATAL: Index out of bounds \\(row: 7, col: -1\\)!");
+
+  mat = create_empty_matrix_12D();
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {
+    for (int j = 0; j < DIMENSION_C3D4; ++j) {
+      EXPECT_DOUBLE_EQ(matrix_12D_get_element(&mat, i, j), 0);
+    }
+  }
+}
+
 TEST(VectorTest, CreateVector2D) {
   Vector2D mat = create_vector_2D(1.0, 2.0);
 
@@ -415,25 +449,27 @@ TEST(BasicMatrix3D, Vector12D) {
 TEST(NaiveTest, CallPrintFunctions) {
   Matrix2D mat2d = create_empty_matrix_2D();
   Matrix3D mat3d = create_empty_matrix_3D();
+  Matrix6D mat6d = create_empty_matrix_6D();
+  Matrix12D mat12d = create_empty_matrix_12D();
   Vector2D vec2d = create_empty_vector_2D();
   Vector3D vec3d = create_empty_vector_3D();
   Vector6D vec6d = create_empty_vector_6D();
   Vector12D vec12d = create_empty_vector_12D();
   MatrixB36 matb36 = create_empty_matrix_B36();
   MatrixB63 matb63 = create_matrix_B63_from_B36(&matb36);
-  Matrix6D mat6d = create_empty_matrix_6D();
   MatrixB612 matb612 = create_empty_matrix_B612();
   MatrixB126 matrixB126 = create_matrix_B126_from_B612(&matb612);
 
   matrix_2D_print(&mat2d);
   matrix_3D_print(&mat3d);
+  matrix_6D_print(&mat6d);
+  matrix_12D_print(&mat12d);
   vector_2D_print(&vec2d);
   vector_3D_print(&vec3d);
   vector_6D_print(&vec6d);
   vector_12D_print(&vec12d);
   matrix_B36_print(&matb36);
   matrix_B63_print(&matb63);
-  matrix_6D_print(&mat6d);
   matrix_B612_print(&matb612);
   matrix_B126_print(&matrixB126);
 
