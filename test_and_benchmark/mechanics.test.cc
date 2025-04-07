@@ -6,7 +6,6 @@
 
 #include <Eigen/Dense>
 
-#include "abaqus_subroutine_force_3D.h"
 #include "abaqus_subroutine_forge.h"
 #include "eigen_adaptor.h"
 
