@@ -182,18 +182,24 @@ TEST(NaiveTest, CallPrintFunctions) {
   Vector2D vec2d = create_empty_vector_2D();
   Vector3D vec3d = create_empty_vector_3D();
   Vector6D vec6d = create_empty_vector_6D();
+  Vector12D vec12d = create_empty_vector_12D();
   MatrixB36 matb36 = create_empty_matrix_B36();
   MatrixB63 matb63 = create_matrix_B63_from_B36(&matb36);
   Matrix6D mat6d = create_empty_matrix_6D();
+  MatrixB612 matb612 = create_empty_matrix_B612();
+  MatrixB126 matrixB126 = create_matrix_B126_from_B612(&matb612);
 
   matrix_2D_print(&mat2d);
   matrix_3D_print(&mat3d);
   vector_2D_print(&vec2d);
   vector_3D_print(&vec3d);
   vector_6D_print(&vec6d);
+  vector_12D_print(&vec12d);
   matrix_B36_print(&matb36);
   matrix_B63_print(&matb63);
   matrix_6D_print(&mat6d);
+  matrix_B612_print(&matb612);
+  matrix_B126_print(&matrixB126);
 
   SUCCEED();  // no need to check output content, just call functions
 }

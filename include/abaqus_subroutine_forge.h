@@ -21,6 +21,7 @@
 #define DIMENSION2 2
 #define DIMENSION3 3
 #define DIMENSION_CPS3 6
+#define DIMENSION6 6
 #define DIMENSION_C3D4 12
 
 #define ZERO_TOLERANCE 1e-15
@@ -34,7 +35,9 @@ typedef enum {
   Matrix3X3,
   Matrix6X6,
   MatrixB3X6,
-  MatrixB6X3
+  MatrixB6X3,
+  MatrixB6X12,
+  MatrixB12X6
 } MatrixType;
 
 // Util functions
@@ -295,6 +298,269 @@ MatrixB63 create_empty_matrix_B63() {
 MatrixB63 matrix_B36_transpose(MatrixB36* mat_b36) {
   MatrixB63 mat_b63 = create_matrix_B63_from_B36(mat_b36);
   return mat_b63;
+}
+
+typedef struct MatrixB612 {
+  MatrixType type;
+  double data[DIMENSION6][DIMENSION_C3D4];
+} MatrixB612;
+
+void matrix_B612_print(const MatrixB612* mat) {
+  printf(
+      "MatrixB612: [[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f], "
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f], "
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f], "
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f], "
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f], "
+      "[%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f]]\n",
+      mat->data[0][0], mat->data[0][1], mat->data[0][2], mat->data[0][3],
+      mat->data[0][4], mat->data[0][5], mat->data[0][6], mat->data[0][7],
+      mat->data[0][8], mat->data[0][9], mat->data[0][10], mat->data[0][11],
+      mat->data[1][0], mat->data[1][1], mat->data[1][2], mat->data[1][3],
+      mat->data[1][4], mat->data[1][5], mat->data[1][6], mat->data[1][7],
+      mat->data[1][8], mat->data[1][9], mat->data[1][10], mat->data[1][11],
+      mat->data[2][0], mat->data[2][1], mat->data[2][2], mat->data[2][3],
+      mat->data[2][4], mat->data[2][5], mat->data[2][6], mat->data[2][7],
+      mat->data[2][8], mat->data[2][9], mat->data[2][10], mat->data[2][11],
+      mat->data[3][0], mat->data[3][1], mat->data[3][2], mat->data[3][3],
+      mat->data[3][4], mat->data[3][5], mat->data[3][6], mat->data[3][7],
+      mat->data[3][8], mat->data[3][9], mat->data[3][10], mat->data[3][11],
+      mat->data[4][0], mat->data[4][1], mat->data[4][2], mat->data[4][3],
+      mat->data[4][4], mat->data[4][5], mat->data[4][6], mat->data[4][7],
+      mat->data[4][8], mat->data[4][9], mat->data[4][10], mat->data[4][11],
+      mat->data[5][0], mat->data[5][1], mat->data[5][2], mat->data[5][3],
+      mat->data[5][4], mat->data[5][5], mat->data[5][6], mat->data[5][7],
+      mat->data[5][8], mat->data[5][9], mat->data[5][10], mat->data[5][11]);
+}
+
+double matrix_B612_get_element(const MatrixB612* mat, int row, int col) {
+  if (col < 0 || col >= DIMENSION_C3D4 || row < 0 || row >= DIMENSION6) {
+    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!\n", row, col);
+  }
+  return mat->data[row][col];
+}
+
+MatrixB612 create_matrix_B612(
+    double ele11, double ele12, double ele13, double ele14, double ele15,
+    double ele16, double ele17, double ele18, double ele19, double ele1_10,
+    double ele1_11, double ele1_12, double ele21, double ele22, double ele23,
+    double ele24, double ele25, double ele26, double ele27, double ele28,
+    double ele29, double ele2_10, double ele2_11, double ele2_12, double ele31,
+    double ele32, double ele33, double ele34, double ele35, double ele36,
+    double ele37, double ele38, double ele39, double ele3_10, double ele3_11,
+    double ele3_12, double ele41, double ele42, double ele43, double ele44,
+    double ele45, double ele46, double ele47, double ele48, double ele49,
+    double ele4_10, double ele4_11, double ele4_12, double ele51, double ele52,
+    double ele53, double ele54, double ele55, double ele56, double ele57,
+    double ele58, double ele59, double ele5_10, double ele5_11, double ele5_12,
+    double ele61, double ele62, double ele63, double ele64, double ele65,
+    double ele66, double ele67, double ele68, double ele69, double ele6_10,
+    double ele6_11, double ele6_12) {
+  MatrixB612 mat;
+  mat.type = MatrixB6X12;
+  mat.data[0][0] = ele11;
+  mat.data[0][1] = ele12;
+  mat.data[0][2] = ele13;
+  mat.data[0][3] = ele14;
+  mat.data[0][4] = ele15;
+  mat.data[0][5] = ele16;
+  mat.data[0][6] = ele17;
+  mat.data[0][7] = ele18;
+  mat.data[0][8] = ele19;
+  mat.data[0][9] = ele1_10;
+  mat.data[0][10] = ele1_11;
+  mat.data[0][11] = ele1_12;
+  mat.data[1][0] = ele21;
+  mat.data[1][1] = ele22;
+  mat.data[1][2] = ele23;
+  mat.data[1][3] = ele24;
+  mat.data[1][4] = ele25;
+  mat.data[1][5] = ele26;
+  mat.data[1][6] = ele27;
+  mat.data[1][7] = ele28;
+  mat.data[1][8] = ele29;
+  mat.data[1][9] = ele2_10;
+  mat.data[1][10] = ele2_11;
+  mat.data[1][11] = ele2_12;
+  mat.data[2][0] = ele31;
+  mat.data[2][1] = ele32;
+  mat.data[2][2] = ele33;
+  mat.data[2][3] = ele34;
+  mat.data[2][4] = ele35;
+  mat.data[2][5] = ele36;
+  mat.data[2][6] = ele37;
+  mat.data[2][7] = ele38;
+  mat.data[2][8] = ele39;
+  mat.data[2][9] = ele3_10;
+  mat.data[2][10] = ele3_11;
+  mat.data[2][11] = ele3_12;
+  mat.data[3][0] = ele41;
+  mat.data[3][1] = ele42;
+  mat.data[3][2] = ele43;
+  mat.data[3][3] = ele44;
+  mat.data[3][4] = ele45;
+  mat.data[3][5] = ele46;
+  mat.data[3][6] = ele47;
+  mat.data[3][7] = ele48;
+  mat.data[3][8] = ele49;
+  mat.data[3][9] = ele4_10;
+  mat.data[3][10] = ele4_11;
+  mat.data[3][11] = ele4_12;
+  mat.data[4][0] = ele51;
+  mat.data[4][1] = ele52;
+  mat.data[4][2] = ele53;
+  mat.data[4][3] = ele54;
+  mat.data[4][4] = ele55;
+  mat.data[4][5] = ele56;
+  mat.data[4][6] = ele57;
+  mat.data[4][7] = ele58;
+  mat.data[4][8] = ele59;
+  mat.data[4][9] = ele5_10;
+  mat.data[4][10] = ele5_11;
+  mat.data[4][11] = ele5_12;
+  mat.data[5][0] = ele61;
+  mat.data[5][1] = ele62;
+  mat.data[5][2] = ele63;
+  mat.data[5][3] = ele64;
+  mat.data[5][4] = ele65;
+  mat.data[5][5] = ele66;
+  mat.data[5][6] = ele67;
+  mat.data[5][7] = ele68;
+  mat.data[5][8] = ele69;
+  mat.data[5][9] = ele6_10;
+  mat.data[5][10] = ele6_11;
+  mat.data[5][11] = ele6_12;
+  return mat;
+}
+
+MatrixB612 create_empty_matrix_B612() {
+  return create_matrix_B612(
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+}
+
+typedef struct MatrixB126 {
+  MatrixType type;
+  double data[DIMENSION_C3D4][DIMENSION6];
+} MatrixB126;
+
+void matrix_B126_print(const MatrixB126* mat) {
+  printf(
+      "MatrixB126: [[%f, %f, %f, %f, %f, %f]\n[%f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f]\n[%f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f]\n[%f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f]\n[%f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f]\n[%f, %f, %f, %f, %f, %f]\n"
+      "[%f, %f, %f, %f, %f, %f]\n[%f, %f, %f, %f, %f, %f]]\n",
+      mat->data[0][0], mat->data[0][1], mat->data[0][2], mat->data[0][3],
+      mat->data[0][4], mat->data[0][5], mat->data[1][0], mat->data[1][1],
+      mat->data[1][2], mat->data[1][3], mat->data[1][4], mat->data[1][5],
+      mat->data[2][0], mat->data[2][1], mat->data[2][2], mat->data[2][3],
+      mat->data[2][4], mat->data[2][5], mat->data[3][0], mat->data[3][1],
+      mat->data[3][2], mat->data[3][3], mat->data[3][4], mat->data[3][5],
+      mat->data[4][0], mat->data[4][1], mat->data[4][2], mat->data[4][3],
+      mat->data[4][4], mat->data[4][5], mat->data[5][0], mat->data[5][1],
+      mat->data[5][2], mat->data[5][3], mat->data[5][4], mat->data[5][5],
+      mat->data[6][0], mat->data[6][1], mat->data[6][2], mat->data[6][3],
+      mat->data[6][4], mat->data[6][5], mat->data[7][0], mat->data[7][1],
+      mat->data[7][2], mat->data[7][3], mat->data[7][4], mat->data[7][5],
+      mat->data[8][0], mat->data[8][1], mat->data[8][2], mat->data[8][3],
+      mat->data[8][4], mat->data[8][5], mat->data[9][0], mat->data[9][1],
+      mat->data[9][2], mat->data[9][3], mat->data[9][4], mat->data[9][5],
+      mat->data[10][0], mat->data[10][1], mat->data[10][2], mat->data[10][3],
+      mat->data[10][4], mat->data[10][5], mat->data[11][0], mat->data[11][1],
+      mat->data[11][2], mat->data[11][3], mat->data[11][4], mat->data[11][5]);
+}
+
+double matrix_B126_get_element(const MatrixB126* mat, int row, int col) {
+  if (col < 0 || col >= DIMENSION6 || row < 0 || row >= DIMENSION_C3D4) {
+    fatal_error("FATAL: Index out of bounds (row: %d, col: %d)!\n", row, col);
+  }
+  return mat->data[row][col];
+}
+
+MatrixB126 create_matrix_B126_from_B612(MatrixB612* mat_b612) {
+  MatrixB126 mat_b126;
+  mat_b126.type = MatrixB12X6;
+  mat_b126.data[0][0] = mat_b612->data[0][0];
+  mat_b126.data[0][1] = mat_b612->data[1][0];
+  mat_b126.data[0][2] = mat_b612->data[2][0];
+  mat_b126.data[0][3] = mat_b612->data[3][0];
+  mat_b126.data[0][4] = mat_b612->data[4][0];
+  mat_b126.data[0][5] = mat_b612->data[5][0];
+  mat_b126.data[1][0] = mat_b612->data[0][1];
+  mat_b126.data[1][1] = mat_b612->data[1][1];
+  mat_b126.data[1][2] = mat_b612->data[2][1];
+  mat_b126.data[1][3] = mat_b612->data[3][1];
+  mat_b126.data[1][4] = mat_b612->data[4][1];
+  mat_b126.data[1][5] = mat_b612->data[5][1];
+  mat_b126.data[2][0] = mat_b612->data[0][2];
+  mat_b126.data[2][1] = mat_b612->data[1][2];
+  mat_b126.data[2][2] = mat_b612->data[2][2];
+  mat_b126.data[2][3] = mat_b612->data[3][2];
+  mat_b126.data[2][4] = mat_b612->data[4][2];
+  mat_b126.data[2][5] = mat_b612->data[5][2];
+  mat_b126.data[3][0] = mat_b612->data[0][3];
+  mat_b126.data[3][1] = mat_b612->data[1][3];
+  mat_b126.data[3][2] = mat_b612->data[2][3];
+  mat_b126.data[3][3] = mat_b612->data[3][3];
+  mat_b126.data[3][4] = mat_b612->data[4][3];
+  mat_b126.data[3][5] = mat_b612->data[5][3];
+  mat_b126.data[4][0] = mat_b612->data[0][4];
+  mat_b126.data[4][1] = mat_b612->data[1][4];
+  mat_b126.data[4][2] = mat_b612->data[2][4];
+  mat_b126.data[4][3] = mat_b612->data[3][4];
+  mat_b126.data[4][4] = mat_b612->data[4][4];
+  mat_b126.data[4][5] = mat_b612->data[5][4];
+  mat_b126.data[5][0] = mat_b612->data[0][5];
+  mat_b126.data[5][1] = mat_b612->data[1][5];
+  mat_b126.data[5][2] = mat_b612->data[2][5];
+  mat_b126.data[5][3] = mat_b612->data[3][5];
+  mat_b126.data[5][4] = mat_b612->data[4][5];
+  mat_b126.data[5][5] = mat_b612->data[5][5];
+  mat_b126.data[6][0] = mat_b612->data[0][6];
+  mat_b126.data[6][1] = mat_b612->data[1][6];
+  mat_b126.data[6][2] = mat_b612->data[2][6];
+  mat_b126.data[6][3] = mat_b612->data[3][6];
+  mat_b126.data[6][4] = mat_b612->data[4][6];
+  mat_b126.data[6][5] = mat_b612->data[5][6];
+  mat_b126.data[7][0] = mat_b612->data[0][7];
+  mat_b126.data[7][1] = mat_b612->data[1][7];
+  mat_b126.data[7][2] = mat_b612->data[2][7];
+  mat_b126.data[7][3] = mat_b612->data[3][7];
+  mat_b126.data[7][4] = mat_b612->data[4][7];
+  mat_b126.data[7][5] = mat_b612->data[5][7];
+  mat_b126.data[8][0] = mat_b612->data[0][8];
+  mat_b126.data[8][1] = mat_b612->data[1][8];
+  mat_b126.data[8][2] = mat_b612->data[2][8];
+  mat_b126.data[8][3] = mat_b612->data[3][8];
+  mat_b126.data[8][4] = mat_b612->data[4][8];
+  mat_b126.data[8][5] = mat_b612->data[5][8];
+  mat_b126.data[9][0] = mat_b612->data[0][9];
+  mat_b126.data[9][1] = mat_b612->data[1][9];
+  mat_b126.data[9][2] = mat_b612->data[2][9];
+  mat_b126.data[9][3] = mat_b612->data[3][9];
+  mat_b126.data[9][4] = mat_b612->data[4][9];
+  mat_b126.data[9][5] = mat_b612->data[5][9];
+  mat_b126.data[10][0] = mat_b612->data[0][10];
+  mat_b126.data[10][1] = mat_b612->data[1][10];
+  mat_b126.data[10][2] = mat_b612->data[2][10];
+  mat_b126.data[10][3] = mat_b612->data[3][10];
+  mat_b126.data[10][4] = mat_b612->data[4][10];
+  mat_b126.data[10][5] = mat_b612->data[5][10];
+  mat_b126.data[11][0] = mat_b612->data[0][11];
+  mat_b126.data[11][1] = mat_b612->data[1][11];
+  mat_b126.data[11][2] = mat_b612->data[2][11];
+  mat_b126.data[11][3] = mat_b612->data[3][11];
+  mat_b126.data[11][4] = mat_b612->data[4][11];
+  mat_b126.data[11][5] = mat_b612->data[5][11];
+  return mat_b126;
+}
+
+MatrixB126 matrix_B612_transpose(MatrixB612* mat_b612) {
+  MatrixB126 mat_b126 = create_matrix_B126_from_B612(mat_b612);
+  return mat_b126;
 }
 
 // Matrix of CPS3 Element stiffness matrix (6x6)
@@ -867,6 +1133,7 @@ Matrix6D matrix_6D_mul_matrix_6D(const Matrix6D* mat1, const Matrix6D* mat2) {
   }
   return result;
 }
+
 // voigt vector and matrix transform
 Vector3D voigt_2D_matrix_to_3D_vector(const Matrix2D* mat) {
   double sym_delta = mat->data[0][1] - mat->data[1][0];
