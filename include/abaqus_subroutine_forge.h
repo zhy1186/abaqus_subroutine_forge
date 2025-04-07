@@ -494,6 +494,17 @@ double matrix_12D_get_element(const Matrix12D* mat, int row, int col) {
   return mat->data[row][col];
 }
 
+void matrix_12D_fill_abaqus_double_array(const Matrix12D* mat, double* dst) {
+  // i loops over rows
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {
+    // j loops over cols
+    for (int j = 0; j < DIMENSION_C3D4; ++j) {
+      dst[i * DIMENSION_C3D4 + j] = matrix_12D_get_element(mat, i, j);
+    }
+  }
+}
+
+
 // Vector 2D -- use in 2D vector
 typedef struct Vector2D {
   MatrixType type;
@@ -632,6 +643,12 @@ Vector12D create_vector_12D(double ele1, double ele2, double ele3, double ele4,
 
 Vector12D create_empty_vector_12D() {
   return create_vector_12D(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+}
+
+void vector_12D_fill_abaqus_double_array(const Vector12D* vec, double* dst) {
+  for (int i = 0; i < DIMENSION_C3D4; ++i) {
+    dst[i] = vector_12D_get_element(vec, i);
+  }
 }
 
 // Matrix definition for CPS3 element matrix B
