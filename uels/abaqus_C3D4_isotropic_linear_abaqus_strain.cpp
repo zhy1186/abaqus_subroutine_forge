@@ -82,15 +82,15 @@ void uel(
   double X1 = original_coords_array[0], Y1 = original_coords_array[1],
          Z1 = original_coords_array[2], X2 = original_coords_array[3],
          Y2 = original_coords_array[4], Z2 = original_coords_array[5],
-         X3 = original_coords_array[3], Y3 = original_coords_array[4],
-         Z3 = original_coords_array[5], X4 = original_coords_array[3],
-         Y4 = original_coords_array[4], Z4 = original_coords_array[5];
+         X3 = original_coords_array[6], Y3 = original_coords_array[7],
+         Z3 = original_coords_array[8], X4 = original_coords_array[9],
+         Y4 = original_coords_array[10], Z4 = original_coords_array[11];
   double u1 = displacement_array[0], v1 = displacement_array[1],
          w1 = displacement_array[2], u2 = displacement_array[3],
          v2 = displacement_array[4], w2 = displacement_array[5],
          u3 = displacement_array[6], v3 = displacement_array[7],
-         w3 = displacement_array[8], u4 = displacement_array[6],
-         v4 = displacement_array[7], w4 = displacement_array[8];
+         w3 = displacement_array[8], u4 = displacement_array[9],
+         v4 = displacement_array[10], w4 = displacement_array[11];
   double E = properties_array[0], v = properties_array[1];
   double lambda = (E * v) / ((1 + v) * (1 - 2 * v));
   double mu = E / (2 * (1 + v));
@@ -103,6 +103,7 @@ void uel(
   C3D4NodalInfo u =
       create_C3D4_nodal_info(u1, v1, w1, u2, v2, w2, u3, v3, w3, u4, v4, w4);
   double volume = compute_C3D4_element_volume(&X);
+  C3D4NodalInfo x = C3D4_nodal_info_add(&X, &u);
 
   // start mechanics process
   Matrix3D F = C3D4_nodal_disp_to_3D_F(&X, &u);
@@ -148,7 +149,7 @@ void uel(
   matrix_12D_fill_abaqus_double_array(&K, element_stiffness_matrix);
 
   // get inner force
-  MatrixB612 B = C3D4_compute_B_matrix(&X);
+  MatrixB612 B = C3D4_compute_B_matrix(&x);
   C3D4NodalInfo inner_force =
       C3D4_compute_inner_force(&B, &stress_voigt, volume);
   Vector12D inner_force_vec = C3D4_nodal_info_to_vector_12D(&inner_force);

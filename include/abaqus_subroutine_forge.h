@@ -1370,49 +1370,50 @@ Matrix3D matrix_3D_inverse(const Matrix3D* mat) {
 }
 
 double matrix_6D_determinant(const Matrix6D* const mat) {
-  // 初始化排列为 {0, 1, 2, 3, 4, 5}
-  int perm[DIMENSION_CPS3] = {0, 1, 2, 3, 4, 5};
+  int perm[DIMENSION6] = {0, 1, 2, 3, 4, 5};
   double det = 0.0;
 
-  // 这里他妈的就是因为ABAQUS的老版本编译器必须在while之前声明，吐了。。。
+  // Declare all variables here.
   double prod = 0.0;
   int inv = 0;
   int i = 0;
   int j = 0;
+  int k = 0, l = 0;
+
   while (true) {
-    // 计算当前排列对应的乘积
+    // Compute the product for the current permutation.
     prod = 1.0;
-    for (int i = 0; i < DIMENSION_CPS3; i++) {
+    for (i = 0; i < DIMENSION_CPS3; i++) {
       prod *= mat->data[i][perm[i]];
     }
 
-    // 计算排列的逆序数以确定排列的符号
+    // Compute the inversion number.
     inv = 0;
-    for (int i = 0; i < DIMENSION_CPS3; i++) {
-      for (int j = i + 1; j < DIMENSION_CPS3; j++) {
+    for (i = 0; i < DIMENSION_CPS3; i++) {
+      for (j = i + 1; j < DIMENSION_CPS3; j++) {
         if (perm[i] > perm[j]) inv++;
       }
     }
     double sign = (inv % 2 == 0) ? 1.0 : -1.0;
     det += sign * prod;
 
-    // 生成下一个排列（字典序排列算法）
+    // Generate next permutation in lexicographical order.
     for (i = DIMENSION_CPS3 - 2; i >= 0; i--) {
       if (perm[i] < perm[i + 1]) break;
     }
-    if (i < 0)  // 已经遍历完所有排列
+    if (i < 0)  // No more permutations.
       break;
 
     for (j = DIMENSION_CPS3 - 1; j > i; j--) {
       if (perm[j] > perm[i]) break;
     }
-    // 交换 perm[i] 与 perm[j]
+    // Swap perm[i] and perm[j].
     int temp = perm[i];
     perm[i] = perm[j];
     perm[j] = temp;
 
-    // 反转 perm[i+1...DIMENSION_CPS3-1]
-    for (int k = i + 1, l = DIMENSION_CPS3 - 1; k < l; k++, l--) {
+    // Reverse the tail portion of the permutation.
+    for (k = i + 1, l = DIMENSION_CPS3 - 1; k < l; k++, l--) {
       temp = perm[k];
       perm[k] = perm[l];
       perm[l] = temp;
