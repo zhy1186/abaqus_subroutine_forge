@@ -244,7 +244,7 @@ void umat(
   CPS3CommInfo CPS3_comm_info = comm_info[(*element_no_ID) - ELEMENT_NUM];
   double *CPS3_info_double_malloc_array =
       CPS3_common_info_to_double_array_use_malloc(&CPS3_comm_info);
-  for (int i = 0; i < COMM_INFO_ENTRY_NUM; ++i) {
+  for (int i = 0; i < CPS3_COMM_INFO_ENTRY_NUM; ++i) {
     solution_dependent_vars_array[i] = CPS3_info_double_malloc_array[i];
   }
   free(CPS3_info_double_malloc_array);

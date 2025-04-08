@@ -14,7 +14,7 @@ extern "C" {
 // element number of the inp file
 #define ELEMENT_NUM 2
 
-CPS3CommInfo comm_info[ELEMENT_NUM];
+C3D4CommInfo comm_info[ELEMENT_NUM];
 
 void uel(
     /* below 4 info should be updated */
@@ -102,7 +102,7 @@ void uel(
       create_C3D4_nodal_info(X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3, X4, Y4, Z4);
   C3D4NodalInfo u =
       create_C3D4_nodal_info(u1, v1, w1, u2, v2, w2, u3, v3, w3, u4, v4, w4);
-  C3D4NodalInfo x = C3D4_nodal_info_add(&X, &u);
+  double volume = compute_C3D4_element_volume(&X);
 
   // start mechanics process
   Matrix3D F = C3D4_nodal_disp_to_3D_F(&X, &u);
@@ -141,7 +141,37 @@ void uel(
                        4 * D31, 4 * D32, 2 * D33);
   Vector6D strain_voigt = voigt_3D_matrix_to_6D_vector(&strain);
   Vector6D stress_voigt = matrix_6D_mul_vector_6D(&C, &strain_voigt);
+  Matrix3D stress = voigt_6D_vector_to_3D_matrix(&stress_voigt);
 
+  // get element stiffness matrix K (initial K0)
+  Matrix12D K = C3D4_compute_initial_element_stiffness_matrix(&X, &C, volume);
+  matrix_12D_fill_abaqus_double_array(&K, element_stiffness_matrix);
+
+  // get inner force
+  MatrixB612 B = C3D4_compute_B_matrix(&X);
+  C3D4NodalInfo inner_force =
+      C3D4_compute_inner_force(&B, &stress_voigt, volume);
+  Vector12D inner_force_vec = C3D4_nodal_info_to_vector_12D(&inner_force);
+  inner_force_vec = vector_12D_number_multiplication(-1, &inner_force_vec);
+  vector_12D_fill_abaqus_double_array(&inner_force_vec,
+                                      abaqus_residual_force_array);
+
+  // energy info
+  double stress_mul_strain = stress_voigt.data[0] * strain_voigt.data[0] +
+                             stress_voigt.data[1] * strain_voigt.data[1] +
+                             stress_voigt.data[2] * strain_voigt.data[2] +
+                             stress_voigt.data[3] * strain_voigt.data[3] +
+                             stress_voigt.data[4] * strain_voigt.data[4] +
+                             stress_voigt.data[5] * strain_voigt.data[5];
+  double strain_energy_density = 0.5 * stress_mul_strain;
+
+  // address information between uel and umat
+  C3D4CommInfo element_comm_info = create_empty_C3D4_common_info();
+  element_comm_info = create_C3D4_common_info_from_matrix_3Ds(
+      ContainInfo, &F, &strain, &stress, &stress, volume,
+      strain_energy_density);
+  comm_info[*element_no_ID] = element_comm_info;
+  clear_C3D4_common_info(&element_comm_info);
 }
 
 // only used for dummy element properties for viewing ODB results
@@ -231,13 +261,13 @@ void umat(
   stress_array[2] += properties_matrix[8] * strain_increment_array[2];
 
   // update SDVs info
-  CPS3CommInfo CPS3_comm_info = comm_info[(*element_no_ID) - ELEMENT_NUM];
-  double *CPS3_info_double_malloc_array =
-      CPS3_common_info_to_double_array_use_malloc(&CPS3_comm_info);
-  for (int i = 0; i < COMM_INFO_ENTRY_NUM; ++i) {
-    solution_dependent_vars_array[i] = CPS3_info_double_malloc_array[i];
+  C3D4CommInfo C3D4_comm_info = comm_info[(*element_no_ID) - ELEMENT_NUM];
+  double *C3D4_info_double_malloc_array =
+      C3D4_common_info_to_double_array_use_malloc(&C3D4_comm_info);
+  for (int i = 0; i < C3D4_COMM_INFO_ENTRY_NUM; ++i) {
+    solution_dependent_vars_array[i] = C3D4_info_double_malloc_array[i];
   }
-  free(CPS3_info_double_malloc_array);
+  free(C3D4_info_double_malloc_array);
 }
 
 #pragma clang diagnostic pop

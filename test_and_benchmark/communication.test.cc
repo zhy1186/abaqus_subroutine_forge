@@ -173,6 +173,60 @@ TEST(CPS3CommInfoTest, CPS3CommonInfoToDoubleArrayUseMalloc) {
   free(double_array_info);
 }
 
+TEST(C3D4CommInfoTest, C3D4CommonInfoToDoubleArrayUseMalloc) {
+  Matrix3D F = create_matrix_3D(1, 2, 3, 4, 5, 6, 7, 8, 9);
+  Matrix3D E = create_matrix_3D(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9);
+  Matrix3D T = create_matrix_3D(10, 20, 30, 40, 50, 60, 70, 80, 90);
+  Matrix3D sigma =
+      create_matrix_3D(100, 200, 300, 400, 500, 600, 700, 800, 900);
+  C3D4CommInfo info = create_C3D4_common_info_from_matrix_3Ds(
+      ContainInfo, &F, &E, &T, &sigma, 1000, 2000);
+  double *double_array_info =
+      C3D4_common_info_to_double_array_use_malloc(&info);
+
+  EXPECT_DOUBLE_EQ(double_array_info[0], info.F11);
+  EXPECT_DOUBLE_EQ(double_array_info[1], info.F12);
+  EXPECT_DOUBLE_EQ(double_array_info[2], info.F13);
+  EXPECT_DOUBLE_EQ(double_array_info[3], info.F21);
+  EXPECT_DOUBLE_EQ(double_array_info[4], info.F22);
+  EXPECT_DOUBLE_EQ(double_array_info[5], info.F23);
+  EXPECT_DOUBLE_EQ(double_array_info[6], info.F31);
+  EXPECT_DOUBLE_EQ(double_array_info[7], info.F32);
+  EXPECT_DOUBLE_EQ(double_array_info[8], info.F33);
+  EXPECT_DOUBLE_EQ(double_array_info[9], info.E11);
+  EXPECT_DOUBLE_EQ(double_array_info[10], info.E12);
+  EXPECT_DOUBLE_EQ(double_array_info[11], info.E13);
+  EXPECT_DOUBLE_EQ(double_array_info[12], info.E21);
+  EXPECT_DOUBLE_EQ(double_array_info[13], info.E22);
+  EXPECT_DOUBLE_EQ(double_array_info[14], info.E23);
+  EXPECT_DOUBLE_EQ(double_array_info[15], info.E31);
+  EXPECT_DOUBLE_EQ(double_array_info[16], info.E32);
+  EXPECT_DOUBLE_EQ(double_array_info[17], info.E33);
+  EXPECT_DOUBLE_EQ(double_array_info[18], info.T11);
+  EXPECT_DOUBLE_EQ(double_array_info[19], info.T12);
+  EXPECT_DOUBLE_EQ(double_array_info[20], info.T13);
+  EXPECT_DOUBLE_EQ(double_array_info[21], info.T21);
+  EXPECT_DOUBLE_EQ(double_array_info[22], info.T22);
+  EXPECT_DOUBLE_EQ(double_array_info[23], info.T23);
+  EXPECT_DOUBLE_EQ(double_array_info[24], info.T31);
+  EXPECT_DOUBLE_EQ(double_array_info[25], info.T32);
+  EXPECT_DOUBLE_EQ(double_array_info[26], info.T33);
+  EXPECT_DOUBLE_EQ(double_array_info[27], info.sigma11);
+  EXPECT_DOUBLE_EQ(double_array_info[28], info.sigma12);
+  EXPECT_DOUBLE_EQ(double_array_info[29], info.sigma13);
+  EXPECT_DOUBLE_EQ(double_array_info[30], info.sigma21);
+  EXPECT_DOUBLE_EQ(double_array_info[31], info.sigma22);
+  EXPECT_DOUBLE_EQ(double_array_info[32], info.sigma23);
+  EXPECT_DOUBLE_EQ(double_array_info[33], info.sigma31);
+  EXPECT_DOUBLE_EQ(double_array_info[34], info.sigma32);
+  EXPECT_DOUBLE_EQ(double_array_info[35], info.sigma33);
+  EXPECT_DOUBLE_EQ(double_array_info[36], info.volume);
+  EXPECT_DOUBLE_EQ(double_array_info[37], info.strain_energy_density);
+  EXPECT_DOUBLE_EQ(double_array_info[38], info.strain_energy);
+  EXPECT_DOUBLE_EQ(double_array_info[39], (double)info.status);
+  free(double_array_info);
+}
+
 TEST(UELInfoTest, UELBasicInfo) {
   int element_dof_num = 1;
   int solution_dependent_vars_num = 2;
@@ -282,4 +336,103 @@ TEST(LogTest, LogInfoDebugAndLogArray) {
   log_debug_array("debug_array2", TYPE_DOUBLE, 6, debug_array2);
 
   SUCCEED();
+}
+
+TEST(C3D4CommonInfoTest, ComprehensiveTest) {
+  // --- Part 1: Test create_C3D4_common_info_from_matrix_3Ds ---
+  // Define four 3x3 matrices using create_matrix_3D.
+  // For simplicity, we use:
+  //  F = identity; E, T, sigma with arbitrary but distinct values.
+  Matrix3D F = create_matrix_3D(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+  Matrix3D E =
+      create_matrix_3D(0.1, 0.02, 0.03, 0.02, 0.15, 0.04, 0.03, 0.04, 0.2);
+  Matrix3D T = create_matrix_3D(10.0, 2.0, 3.0, 2.0, 15.0, 4.0, 3.0, 4.0, 20.0);
+  Matrix3D sigma =
+      create_matrix_3D(12.0, 3.0, 4.0, 3.0, 18.0, 5.0, 4.0, 5.0, 24.0);
+  double volume = 1.0;
+  double strain_energy_density = 100.0;  // so energy should be 100.0
+
+  // Create common info with a status of DefaultInitialized.
+  UelInfoStatus input_status = DefaultInitialized;
+  C3D4CommInfo info = create_C3D4_common_info_from_matrix_3Ds(
+      input_status, &F, &E, &T, &sigma, volume, strain_energy_density);
+  // Verify that the status was set correctly.
+  EXPECT_EQ(info.status, input_status);
+
+  // Check deformation gradient F components.
+  EXPECT_DOUBLE_EQ(info.F11, matrix_3D_get_element(&F, 0, 0));
+  EXPECT_DOUBLE_EQ(info.F12, matrix_3D_get_element(&F, 0, 1));
+  EXPECT_DOUBLE_EQ(info.F13, matrix_3D_get_element(&F, 0, 2));
+  EXPECT_DOUBLE_EQ(info.F21, matrix_3D_get_element(&F, 1, 0));
+  EXPECT_DOUBLE_EQ(info.F22, matrix_3D_get_element(&F, 1, 1));
+  EXPECT_DOUBLE_EQ(info.F23, matrix_3D_get_element(&F, 1, 2));
+  EXPECT_DOUBLE_EQ(info.F31, matrix_3D_get_element(&F, 2, 0));
+  EXPECT_DOUBLE_EQ(info.F32, matrix_3D_get_element(&F, 2, 1));
+  EXPECT_DOUBLE_EQ(info.F33, matrix_3D_get_element(&F, 2, 2));
+
+  // Check Green strain E components.
+  EXPECT_DOUBLE_EQ(info.E11, matrix_3D_get_element(&E, 0, 0));
+  EXPECT_DOUBLE_EQ(info.E12, matrix_3D_get_element(&E, 0, 1));
+  EXPECT_DOUBLE_EQ(info.E13, matrix_3D_get_element(&E, 0, 2));
+  EXPECT_DOUBLE_EQ(info.E21, matrix_3D_get_element(&E, 1, 0));
+  EXPECT_DOUBLE_EQ(info.E22, matrix_3D_get_element(&E, 1, 1));
+  EXPECT_DOUBLE_EQ(info.E23, matrix_3D_get_element(&E, 1, 2));
+  EXPECT_DOUBLE_EQ(info.E31, matrix_3D_get_element(&E, 2, 0));
+  EXPECT_DOUBLE_EQ(info.E32, matrix_3D_get_element(&E, 2, 1));
+  EXPECT_DOUBLE_EQ(info.E33, matrix_3D_get_element(&E, 2, 2));
+
+  // Check PK2 stress T components.
+  EXPECT_DOUBLE_EQ(info.T11, matrix_3D_get_element(&T, 0, 0));
+  EXPECT_DOUBLE_EQ(info.T12, matrix_3D_get_element(&T, 0, 1));
+  EXPECT_DOUBLE_EQ(info.T13, matrix_3D_get_element(&T, 0, 2));
+  EXPECT_DOUBLE_EQ(info.T21, matrix_3D_get_element(&T, 1, 0));
+  EXPECT_DOUBLE_EQ(info.T22, matrix_3D_get_element(&T, 1, 1));
+  EXPECT_DOUBLE_EQ(info.T23, matrix_3D_get_element(&T, 1, 2));
+  EXPECT_DOUBLE_EQ(info.T31, matrix_3D_get_element(&T, 2, 0));
+  EXPECT_DOUBLE_EQ(info.T32, matrix_3D_get_element(&T, 2, 1));
+  EXPECT_DOUBLE_EQ(info.T33, matrix_3D_get_element(&T, 2, 2));
+
+  // Check Cauchy stress sigma components.
+  EXPECT_DOUBLE_EQ(info.sigma11, matrix_3D_get_element(&sigma, 0, 0));
+  EXPECT_DOUBLE_EQ(info.sigma12, matrix_3D_get_element(&sigma, 0, 1));
+  EXPECT_DOUBLE_EQ(info.sigma13, matrix_3D_get_element(&sigma, 0, 2));
+  EXPECT_DOUBLE_EQ(info.sigma21, matrix_3D_get_element(&sigma, 1, 0));
+  EXPECT_DOUBLE_EQ(info.sigma22, matrix_3D_get_element(&sigma, 1, 1));
+  EXPECT_DOUBLE_EQ(info.sigma23, matrix_3D_get_element(&sigma, 1, 2));
+  EXPECT_DOUBLE_EQ(info.sigma31, matrix_3D_get_element(&sigma, 2, 0));
+  EXPECT_DOUBLE_EQ(info.sigma32, matrix_3D_get_element(&sigma, 2, 1));
+  EXPECT_DOUBLE_EQ(info.sigma33, matrix_3D_get_element(&sigma, 2, 2));
+
+  // Check volume and energy fields.
+  EXPECT_DOUBLE_EQ(info.volume, volume);
+  EXPECT_DOUBLE_EQ(info.strain_energy_density, strain_energy_density);
+  EXPECT_DOUBLE_EQ(info.strain_energy, volume * strain_energy_density);
+
+  // --- Part 2: Test create_empty_C3D4_common_info ---
+  C3D4CommInfo empty_info = create_empty_C3D4_common_info();
+  // Expect status to be DefaultInitialized.
+  EXPECT_EQ(empty_info.status, DefaultInitialized);
+  // Verify a few fields are zero.
+  EXPECT_DOUBLE_EQ(empty_info.F11, 0.0);
+  EXPECT_DOUBLE_EQ(empty_info.E11, 0.0);
+  EXPECT_DOUBLE_EQ(empty_info.T11, 0.0);
+  EXPECT_DOUBLE_EQ(empty_info.sigma11, 0.0);
+  EXPECT_DOUBLE_EQ(empty_info.volume, 0.0);
+  EXPECT_DOUBLE_EQ(empty_info.strain_energy_density, 0.0);
+  EXPECT_DOUBLE_EQ(empty_info.strain_energy, 0.0);
+
+  // --- Part 3: Test clear_C3D4_common_info ---
+  // Clear the previously created info object.
+  clear_C3D4_common_info(&info);
+  // Status should be updated to InfoCleared.
+  EXPECT_EQ(info.status, InfoCleared);
+  // All fields should now be zero.
+  EXPECT_DOUBLE_EQ(info.F11, 0.0);
+  EXPECT_DOUBLE_EQ(info.F12, 0.0);
+  EXPECT_DOUBLE_EQ(info.E11, 0.0);
+  EXPECT_DOUBLE_EQ(info.T11, 0.0);
+  EXPECT_DOUBLE_EQ(info.sigma11, 0.0);
+  EXPECT_DOUBLE_EQ(info.volume, 0.0);
+  EXPECT_DOUBLE_EQ(info.strain_energy_density, 0.0);
+  EXPECT_DOUBLE_EQ(info.strain_energy, 0.0);
 }

@@ -504,7 +504,6 @@ void matrix_12D_fill_abaqus_double_array(const Matrix12D* mat, double* dst) {
   }
 }
 
-
 // Vector 2D -- use in 2D vector
 typedef struct Vector2D {
   MatrixType type;
@@ -1240,6 +1239,14 @@ Vector6D vector_6D_negative(const Vector6D* mat) {
 Vector6D vector_6D_minus(const Vector6D* matrix_a, const Vector6D* matrix_b) {
   const Vector6D negative_matrix_b = vector_6D_negative(matrix_b);
   return vector_6D_add(matrix_a, &negative_matrix_b);
+}
+
+Vector12D vector_12D_number_multiplication(double num, const Vector12D* vec) {
+  return create_vector_12D(
+      num * vec->data[0], num * vec->data[1], num * vec->data[2],
+      num * vec->data[3], num * vec->data[4], num * vec->data[5],
+      num * vec->data[6], num * vec->data[7], num * vec->data[8],
+      num * vec->data[9], num * vec->data[10], num * vec->data[11]);
 }
 
 // matrix vector multiplication and inverse

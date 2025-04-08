@@ -220,6 +220,18 @@ TEST(BasicMathTest, NumMulVector6D) {
   EXPECT_EQ(to_eigen(result), result_eigen);
 }
 
+TEST(BasicMathTest, NumMulVector12D) {
+  const double factor = 4.0;
+  Vector12D mat = create_vector_12D(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0,
+                                    10.0, 11.0, 12.0);
+  Vector12D result = vector_12D_number_multiplication(factor, &mat);
+
+  Eigen::Vector<double, 12> mat_eigen = to_eigen(mat);
+  Eigen::Vector<double, 12> result_eigen = factor * mat_eigen;
+
+  EXPECT_EQ(to_eigen(result), result_eigen);
+}
+
 TEST(BasicMathTest, NegativeMatrix2D) {
   Matrix2D mat = create_matrix_2D(1.0, 2.0, 3.0, 4.0);
   Matrix2D result = matrix_2D_negative(&mat);
@@ -597,7 +609,7 @@ TEST(BasicMathTest, MatrixB126MulVector6DTest) {
   // CASE 2: Unit vector test (all ones)
   Vector6D ones_vec;
   ones_vec.type = Vector6X1;
-  for (double & i : ones_vec.data) {
+  for (double& i : ones_vec.data) {
     i = 1.0;
   }
   Vector12D result_ones = matrix_B126_mul_vector_6D(&mat_b126, &ones_vec);

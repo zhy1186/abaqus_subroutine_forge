@@ -140,3 +140,11 @@ inline Eigen::Matrix<double, 6, 1> to_eigen(const Vector6D& v) {
   }
   return res;
 }
+
+inline Eigen::Matrix<double, 12, 1> to_eigen(const Vector12D& v) {
+  Eigen::Matrix<double, 12, 1> res;
+  for (int i = 0; i < 12; i++) {
+    res(i, 0) = v.data[i];
+  }
+  return res;
+}
