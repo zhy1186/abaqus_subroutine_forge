@@ -1374,15 +1374,20 @@ double matrix_6D_determinant(const Matrix6D* const mat) {
   int perm[DIMENSION_CPS3] = {0, 1, 2, 3, 4, 5};
   double det = 0.0;
 
+  // 这里他妈的就是因为ABAQUS的老版本编译器必须在while之前声明，吐了。。。
+  double prod = 0.0;
+  int inv = 0;
+  int i = 0;
+  int j = 0;
   while (true) {
     // 计算当前排列对应的乘积
-    double prod = 1.0;
+    prod = 1.0;
     for (int i = 0; i < DIMENSION_CPS3; i++) {
       prod *= mat->data[i][perm[i]];
     }
 
     // 计算排列的逆序数以确定排列的符号
-    int inv = 0;
+    inv = 0;
     for (int i = 0; i < DIMENSION_CPS3; i++) {
       for (int j = i + 1; j < DIMENSION_CPS3; j++) {
         if (perm[i] > perm[j]) inv++;
@@ -1392,14 +1397,12 @@ double matrix_6D_determinant(const Matrix6D* const mat) {
     det += sign * prod;
 
     // 生成下一个排列（字典序排列算法）
-    int i;
     for (i = DIMENSION_CPS3 - 2; i >= 0; i--) {
       if (perm[i] < perm[i + 1]) break;
     }
     if (i < 0)  // 已经遍历完所有排列
       break;
 
-    int j;
     for (j = DIMENSION_CPS3 - 1; j > i; j--) {
       if (perm[j] > perm[i]) break;
     }

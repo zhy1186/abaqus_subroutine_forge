@@ -642,7 +642,7 @@ TEST(C3D4ComputeInnerForceTest, SimpleCase) {
   f_inner_vec.data[10] = f_inner.node4_dof2;
   f_inner_vec.data[11] = f_inner.node4_dof3;
 
-  for (int i = 0; i < DIMENSION_C3D4; ++i) {
-    EXPECT_NEAR(f_inner_vec.data[i], expected, 1e-10);
+  for (double i : f_inner_vec.data) {
+    EXPECT_NEAR(i, expected, 1e-10);
   }
 }
