@@ -89,6 +89,27 @@ inline Eigen::Matrix<double, 6, 3> to_eigen(const MatrixB63& mat) {
   return eigen_mat;
 }
 
+inline Eigen::Matrix<double, 4, 4> to_eigen(const Matrix4D& mat) {
+  Eigen::Matrix<double, 4, 4> eigen_mat;
+  eigen_mat(0, 0) = mat.data[0][0];
+  eigen_mat(0, 1) = mat.data[0][1];
+  eigen_mat(0, 2) = mat.data[0][2];
+  eigen_mat(0, 3) = mat.data[0][3];
+  eigen_mat(1, 0) = mat.data[1][0];
+  eigen_mat(1, 1) = mat.data[1][1];
+  eigen_mat(1, 2) = mat.data[1][2];
+  eigen_mat(1, 3) = mat.data[1][3];
+  eigen_mat(2, 0) = mat.data[2][0];
+  eigen_mat(2, 1) = mat.data[2][1];
+  eigen_mat(2, 2) = mat.data[2][2];
+  eigen_mat(2, 3) = mat.data[2][3];
+  eigen_mat(3, 0) = mat.data[3][0];
+  eigen_mat(3, 1) = mat.data[3][1];
+  eigen_mat(3, 2) = mat.data[3][2];
+  eigen_mat(3, 3) = mat.data[3][3];
+  return eigen_mat;
+}
+
 inline Eigen::Matrix<double, 6, 6> to_eigen(const Matrix6D& mat) {
   Eigen::Matrix<double, 6, 6> eigen_mat;
 

@@ -12,7 +12,7 @@ extern "C" {
 
 // configurations must be reviewed each time run ABAQUS with UEL
 // element number of the inp file
-#define ELEMENT_NUM 2
+#define ELEMENT_NUM 12
 
 C3D4CommInfo comm_info[ELEMENT_NUM];
 

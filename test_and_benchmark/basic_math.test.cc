@@ -676,6 +676,31 @@ TEST(BasicMathTest, DetMatrix6D) {
   EXPECT_EQ(det, expected);
 }
 
+TEST(BasicMathTest, DetMatrix4D) {
+  Matrix4D mat;
+  mat.type = Matrix4X4;
+  mat.data[0][0] = 1;
+  mat.data[0][1] = 2;
+  mat.data[0][2] = 3;
+  mat.data[0][3] = 14;
+  mat.data[1][0] = 5;
+  mat.data[1][1] = 6;
+  mat.data[1][2] = 37;
+  mat.data[1][3] = 8;
+  mat.data[2][0] = 49;
+  mat.data[2][1] = 10;
+  mat.data[2][2] = 11;
+  mat.data[2][3] = 12;
+  mat.data[3][0] = 13;
+  mat.data[3][1] = 14;
+  mat.data[3][2] = 15;
+  mat.data[3][3] = 16;
+  double det = matrix_4D_determinant(&mat);
+  Eigen::Matrix<double, 4, 4> mat_eigen = to_eigen(mat);
+  double expected = mat_eigen.determinant();
+  EXPECT_DOUBLE_EQ(det, expected);
+}
+
 TEST(BasicMathTest, InvMatrix2D) {
   Matrix2D mat = create_matrix_2D(1.0, 2.0, 3.0, 4.0);
   Matrix2D reverse = matrix_2D_inverse(&mat);

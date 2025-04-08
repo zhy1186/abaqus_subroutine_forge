@@ -20,6 +20,7 @@
 
 #define DIMENSION2 2
 #define DIMENSION3 3
+#define DIMENSION4 4
 #define DIMENSION_CPS3 6
 #define DIMENSION6 6
 #define DIMENSION_C3D4 12
@@ -33,6 +34,7 @@ typedef enum {
   Vector12X1,
   Matrix2X2,
   Matrix3X3,
+  Matrix4X4,
   Matrix6X6,
   MatrixB3X6,
   MatrixB6X3,
@@ -1533,6 +1535,35 @@ Matrix3D voigt_6D_vector_to_3D_matrix(const Vector6D* vec) {
                           vec->data[4], vec->data[3], vec->data[2]);
 }
 
+// Matrix 4D -- only for C3D4 volume computation
+typedef struct Matrix4D {
+  MatrixType type;
+  double data[DIMENSION4][DIMENSION4];
+} Matrix4D;
+
+double matrix_4D_determinant(const Matrix4D* mat) {
+  double det = 0.0;
+  // 对第一行的每个元素展开
+  for (int col = 0; col < DIMENSION4; col++) {
+    Matrix3D submat = create_empty_matrix_3D();
+    int row_minor = 0;
+    // 构造子矩阵：跳过第一行以及当前列 col
+    for (int i = 1; i < DIMENSION4; i++) {
+      int col_minor = 0;
+      for (int j = 0; j < DIMENSION4; j++) {
+        if (j == col) continue;
+        submat.data[row_minor][col_minor] = mat->data[i][j];
+        col_minor++;
+      }
+      row_minor++;
+    }
+    double sub_det = matrix_3D_determinant(&submat);
+    double sign = (col % 2 == 0) ? 1.0 : -1.0;
+    det += sign * mat->data[0][col] * sub_det;
+  }
+  return det;
+}
+
 //  mechanics method for UEL development
 typedef struct CPS3NodalInfo {
   double node1_dof1;
@@ -1996,23 +2027,25 @@ double compute_C3D4_element_volume(const C3D4NodalInfo* coords) {
   double y4 = coords->node4_dof2;
   double z4 = coords->node4_dof3;
 
-  double a1 = x2 - x1;
-  double b1 = y2 - y1;
-  double c1 = z2 - z1;
-
-  double a2 = x3 - x1;
-  double b2 = y3 - y1;
-  double c2 = z3 - z1;
-
-  double a3 = x4 - x1;
-  double b3 = y4 - y1;
-  double c3 = z4 - z1;
-
-  double det = a1 * (b2 * c3 - c2 * b3) - b1 * (a2 * c3 - c2 * a3) +
-               c1 * (a2 * b3 - b2 * a3);
-  if (det < 0) {
-    det = (-det);
-  }
+  Matrix4D xyz;
+  xyz.type = Matrix4X4;
+  xyz.data[0][0] = 1;
+  xyz.data[0][1] = x1;
+  xyz.data[0][2] = y1;
+  xyz.data[0][3] = z1;
+  xyz.data[1][0] = 1;
+  xyz.data[1][1] = x2;
+  xyz.data[1][2] = y2;
+  xyz.data[1][3] = z2;
+  xyz.data[2][0] = 1;
+  xyz.data[2][1] = x3;
+  xyz.data[2][2] = y3;
+  xyz.data[2][3] = z3;
+  xyz.data[3][0] = 1;
+  xyz.data[3][1] = x4;
+  xyz.data[3][2] = y4;
+  xyz.data[3][3] = z4;
+  double det = matrix_4D_determinant(&xyz);
   double volume = det / 6.0;
   return volume;
 }
@@ -2025,9 +2058,9 @@ MatrixB612 C3D4_compute_B_matrix(const C3D4NodalInfo* coords) {
   B.type = MatrixB6X12;
 
   // Compute the volume of the tetrahedral element.
-  double vol = compute_C3D4_element_volume(coords);
+  double signed_vol = compute_C3D4_element_volume(coords);
   // Denominator in the shape function derivative formulas.
-  double denom = 6.0 * vol;
+  double signed_vol_times_6 = 6.0 * signed_vol;
 
   // Extract nodal coordinates for convenience.
   double x1 = coords->node1_dof1, y1 = coords->node1_dof2,
@@ -2039,110 +2072,123 @@ MatrixB612 C3D4_compute_B_matrix(const C3D4NodalInfo* coords) {
   double x4 = coords->node4_dof1, y4 = coords->node4_dof2,
          z4 = coords->node4_dof3;
 
-  // Compute the derivatives of the shape functions.
-  double dN1_dx = (y2 * (z3 - z4) + y3 * (z4 - z2) + y4 * (z2 - z3)) / denom;
-  double dN1_dy = (z2 * (x3 - x4) + z3 * (x4 - x2) + z4 * (x2 - x3)) / denom;
-  double dN1_dz = (x2 * (y3 - y4) + x3 * (y4 - y2) + x4 * (y2 - y3)) / denom;
+  Matrix3D mbeta1 = create_matrix_3D(1, y2, z2, 1, y3, z3, 1, y4, z4);
+  Matrix3D mbeta2 = create_matrix_3D(1, y1, z1, 1, y3, z3, 1, y4, z4);
+  Matrix3D mbeta3 = create_matrix_3D(1, y1, z1, 1, y2, z2, 1, y4, z4);
+  Matrix3D mbeta4 = create_matrix_3D(1, y1, z1, 1, y2, z2, 1, y3, z3);
 
-  double dN2_dx = (y3 * (z4 - z1) + y4 * (z1 - z3) + y1 * (z3 - z4)) / denom;
-  double dN2_dy = (z3 * (x4 - x1) + z4 * (x1 - x3) + z1 * (x3 - x4)) / denom;
-  double dN2_dz = (x3 * (y4 - y1) + x4 * (y1 - y3) + x1 * (y3 - y4)) / denom;
+  Matrix3D mgamma1 = create_matrix_3D(1, x2, z2, 1, x3, z3, 1, x4, z4);
+  Matrix3D mgamma2 = create_matrix_3D(1, x1, z1, 1, x3, z3, 1, x4, z4);
+  Matrix3D mgamma3 = create_matrix_3D(1, x1, z1, 1, x2, z2, 1, x4, z4);
+  Matrix3D mgamma4 = create_matrix_3D(1, x1, z1, 1, x2, z2, 1, x3, z3);
 
-  double dN3_dx = (y4 * (z1 - z2) + y1 * (z2 - z4) + y2 * (z4 - z1)) / denom;
-  double dN3_dy = (z4 * (x1 - x2) + z1 * (x2 - x4) + z2 * (x4 - x1)) / denom;
-  double dN3_dz = (x4 * (y1 - y2) + x1 * (y2 - y4) + x2 * (y4 - y1)) / denom;
+  Matrix3D mdelta1 = create_matrix_3D(1, x2, y2, 1, x3, y3, 1, x4, y4);
+  Matrix3D mdelta2 = create_matrix_3D(1, x1, y1, 1, x3, y3, 1, x4, y4);
+  Matrix3D mdelta3 = create_matrix_3D(1, x1, y1, 1, x2, y2, 1, x4, y4);
+  Matrix3D mdelta4 = create_matrix_3D(1, x1, y1, 1, x2, y2, 1, x3, y3);
 
-  double dN4_dx = (y1 * (z2 - z3) + y2 * (z3 - z1) + y3 * (z1 - z2)) / denom;
-  double dN4_dy = (z1 * (x2 - x3) + z2 * (x3 - x1) + z3 * (x1 - x2)) / denom;
-  double dN4_dz = (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / denom;
+  double beta1 = -matrix_3D_determinant(&mbeta1);
+  double beta2 = matrix_3D_determinant(&mbeta2);
+  double beta3 = -matrix_3D_determinant(&mbeta3);
+  double beta4 = matrix_3D_determinant(&mbeta4);
+
+  double gamma1 = matrix_3D_determinant(&mgamma1);
+  double gamma2 = -matrix_3D_determinant(&mgamma2);
+  double gamma3 = matrix_3D_determinant(&mgamma3);
+  double gamma4 = -matrix_3D_determinant(&mgamma4);
+
+  double delta1 = -matrix_3D_determinant(&mdelta1);
+  double delta2 = matrix_3D_determinant(&mdelta2);
+  double delta3 = -matrix_3D_determinant(&mdelta3);
+  double delta4 = matrix_3D_determinant(&mdelta4);
 
   // Assemble the B matrix row by row.
   // Row 0: [dN1_dx, 0, 0, dN2_dx, 0, 0, dN3_dx, 0, 0, dN4_dx, 0, 0]
-  B.data[0][0] = dN1_dx;
+  B.data[0][0] = beta1;
   B.data[0][1] = 0.0;
   B.data[0][2] = 0.0;
-  B.data[0][3] = dN2_dx;
+  B.data[0][3] = beta2;
   B.data[0][4] = 0.0;
   B.data[0][5] = 0.0;
-  B.data[0][6] = dN3_dx;
+  B.data[0][6] = beta3;
   B.data[0][7] = 0.0;
   B.data[0][8] = 0.0;
-  B.data[0][9] = dN4_dx;
+  B.data[0][9] = beta4;
   B.data[0][10] = 0.0;
   B.data[0][11] = 0.0;
 
   // Row 1: [0, dN1_dy, 0, 0, dN2_dy, 0, 0, dN3_dy, 0, 0, dN4_dy, 0]
   B.data[1][0] = 0.0;
-  B.data[1][1] = dN1_dy;
+  B.data[1][1] = gamma1;
   B.data[1][2] = 0.0;
   B.data[1][3] = 0.0;
-  B.data[1][4] = dN2_dy;
+  B.data[1][4] = gamma2;
   B.data[1][5] = 0.0;
   B.data[1][6] = 0.0;
-  B.data[1][7] = dN3_dy;
+  B.data[1][7] = gamma3;
   B.data[1][8] = 0.0;
   B.data[1][9] = 0.0;
-  B.data[1][10] = dN4_dy;
+  B.data[1][10] = gamma4;
   B.data[1][11] = 0.0;
 
   // Row 2: [0, 0, dN1_dz, 0, 0, dN2_dz, 0, 0, dN3_dz, 0, 0, dN4_dz]
   B.data[2][0] = 0.0;
   B.data[2][1] = 0.0;
-  B.data[2][2] = dN1_dz;
+  B.data[2][2] = delta1;
   B.data[2][3] = 0.0;
   B.data[2][4] = 0.0;
-  B.data[2][5] = dN2_dz;
+  B.data[2][5] = delta2;
   B.data[2][6] = 0.0;
   B.data[2][7] = 0.0;
-  B.data[2][8] = dN3_dz;
+  B.data[2][8] = delta3;
   B.data[2][9] = 0.0;
   B.data[2][10] = 0.0;
-  B.data[2][11] = dN4_dz;
+  B.data[2][11] = delta4;
 
   // Row 3: [dN1_dy, dN1_dx, 0, dN2_dy, dN2_dx, 0, dN3_dy, dN3_dx, 0, dN4_dy,
   // dN4_dx, 0]
-  B.data[3][0] = dN1_dy;
-  B.data[3][1] = dN1_dx;
+  B.data[3][0] = gamma1;
+  B.data[3][1] = beta1;
   B.data[3][2] = 0.0;
-  B.data[3][3] = dN2_dy;
-  B.data[3][4] = dN2_dx;
+  B.data[3][3] = gamma2;
+  B.data[3][4] = beta2;
   B.data[3][5] = 0.0;
-  B.data[3][6] = dN3_dy;
-  B.data[3][7] = dN3_dx;
+  B.data[3][6] = gamma3;
+  B.data[3][7] = beta3;
   B.data[3][8] = 0.0;
-  B.data[3][9] = dN4_dy;
-  B.data[3][10] = dN4_dx;
+  B.data[3][9] = gamma4;
+  B.data[3][10] = beta4;
   B.data[3][11] = 0.0;
 
   // Row 4: [0, dN1_dz, dN1_dy, 0, dN2_dz, dN2_dy, 0, dN3_dz, dN3_dy, 0, dN4_dz,
   // dN4_dy]
   B.data[4][0] = 0.0;
-  B.data[4][1] = dN1_dz;
-  B.data[4][2] = dN1_dy;
+  B.data[4][1] = delta1;
+  B.data[4][2] = gamma1;
   B.data[4][3] = 0.0;
-  B.data[4][4] = dN2_dz;
-  B.data[4][5] = dN2_dy;
+  B.data[4][4] = delta2;
+  B.data[4][5] = gamma2;
   B.data[4][6] = 0.0;
-  B.data[4][7] = dN3_dz;
-  B.data[4][8] = dN3_dy;
+  B.data[4][7] = delta3;
+  B.data[4][8] = gamma3;
   B.data[4][9] = 0.0;
-  B.data[4][10] = dN4_dz;
-  B.data[4][11] = dN4_dy;
+  B.data[4][10] = delta4;
+  B.data[4][11] = gamma4;
 
   // Row 5: [dN1_dz, 0, dN1_dx, dN2_dz, 0, dN2_dx, dN3_dz, 0, dN3_dx, dN4_dz, 0,
   // dN4_dx]
-  B.data[5][0] = dN1_dz;
+  B.data[5][0] = delta1;
   B.data[5][1] = 0.0;
-  B.data[5][2] = dN1_dx;
-  B.data[5][3] = dN2_dz;
+  B.data[5][2] = beta1;
+  B.data[5][3] = delta2;
   B.data[5][4] = 0.0;
-  B.data[5][5] = dN2_dx;
-  B.data[5][6] = dN3_dz;
+  B.data[5][5] = beta2;
+  B.data[5][6] = delta3;
   B.data[5][7] = 0.0;
-  B.data[5][8] = dN3_dx;
-  B.data[5][9] = dN4_dz;
+  B.data[5][8] = beta3;
+  B.data[5][9] = delta4;
   B.data[5][10] = 0.0;
-  B.data[5][11] = dN4_dx;
+  B.data[5][11] = beta4;
 
   return B;
 }
