@@ -2104,91 +2104,91 @@ MatrixB612 C3D4_compute_B_matrix(const C3D4NodalInfo* coords) {
 
   // Assemble the B matrix row by row.
   // Row 0: [dN1_dx, 0, 0, dN2_dx, 0, 0, dN3_dx, 0, 0, dN4_dx, 0, 0]
-  B.data[0][0] = beta1;
+  B.data[0][0] = beta1 / signed_vol_times_6;
   B.data[0][1] = 0.0;
   B.data[0][2] = 0.0;
-  B.data[0][3] = beta2;
+  B.data[0][3] = beta2 / signed_vol_times_6;
   B.data[0][4] = 0.0;
   B.data[0][5] = 0.0;
-  B.data[0][6] = beta3;
+  B.data[0][6] = beta3 / signed_vol_times_6;
   B.data[0][7] = 0.0;
   B.data[0][8] = 0.0;
-  B.data[0][9] = beta4;
+  B.data[0][9] = beta4 / signed_vol_times_6;
   B.data[0][10] = 0.0;
   B.data[0][11] = 0.0;
 
   // Row 1: [0, dN1_dy, 0, 0, dN2_dy, 0, 0, dN3_dy, 0, 0, dN4_dy, 0]
   B.data[1][0] = 0.0;
-  B.data[1][1] = gamma1;
+  B.data[1][1] = gamma1 / signed_vol_times_6;
   B.data[1][2] = 0.0;
   B.data[1][3] = 0.0;
-  B.data[1][4] = gamma2;
+  B.data[1][4] = gamma2 / signed_vol_times_6;
   B.data[1][5] = 0.0;
   B.data[1][6] = 0.0;
-  B.data[1][7] = gamma3;
+  B.data[1][7] = gamma3 / signed_vol_times_6;
   B.data[1][8] = 0.0;
   B.data[1][9] = 0.0;
-  B.data[1][10] = gamma4;
+  B.data[1][10] = gamma4 / signed_vol_times_6;
   B.data[1][11] = 0.0;
 
   // Row 2: [0, 0, dN1_dz, 0, 0, dN2_dz, 0, 0, dN3_dz, 0, 0, dN4_dz]
   B.data[2][0] = 0.0;
   B.data[2][1] = 0.0;
-  B.data[2][2] = delta1;
+  B.data[2][2] = delta1 / signed_vol_times_6;
   B.data[2][3] = 0.0;
   B.data[2][4] = 0.0;
-  B.data[2][5] = delta2;
+  B.data[2][5] = delta2 / signed_vol_times_6;
   B.data[2][6] = 0.0;
   B.data[2][7] = 0.0;
-  B.data[2][8] = delta3;
+  B.data[2][8] = delta3 / signed_vol_times_6;
   B.data[2][9] = 0.0;
   B.data[2][10] = 0.0;
-  B.data[2][11] = delta4;
+  B.data[2][11] = delta4 / signed_vol_times_6;
 
   // Row 3: [dN1_dy, dN1_dx, 0, dN2_dy, dN2_dx, 0, dN3_dy, dN3_dx, 0, dN4_dy,
   // dN4_dx, 0]
-  B.data[3][0] = gamma1;
-  B.data[3][1] = beta1;
+  B.data[3][0] = gamma1 / signed_vol_times_6;
+  B.data[3][1] = beta1 / signed_vol_times_6;
   B.data[3][2] = 0.0;
-  B.data[3][3] = gamma2;
-  B.data[3][4] = beta2;
+  B.data[3][3] = gamma2 / signed_vol_times_6;
+  B.data[3][4] = beta2 / signed_vol_times_6;
   B.data[3][5] = 0.0;
-  B.data[3][6] = gamma3;
-  B.data[3][7] = beta3;
+  B.data[3][6] = gamma3 / signed_vol_times_6;
+  B.data[3][7] = beta3 / signed_vol_times_6;
   B.data[3][8] = 0.0;
-  B.data[3][9] = gamma4;
-  B.data[3][10] = beta4;
+  B.data[3][9] = gamma4 / signed_vol_times_6;
+  B.data[3][10] = beta4 / signed_vol_times_6;
   B.data[3][11] = 0.0;
 
   // Row 4: [0, dN1_dz, dN1_dy, 0, dN2_dz, dN2_dy, 0, dN3_dz, dN3_dy, 0, dN4_dz,
   // dN4_dy]
   B.data[4][0] = 0.0;
-  B.data[4][1] = delta1;
-  B.data[4][2] = gamma1;
+  B.data[4][1] = delta1 / signed_vol_times_6;
+  B.data[4][2] = gamma1 / signed_vol_times_6;
   B.data[4][3] = 0.0;
-  B.data[4][4] = delta2;
-  B.data[4][5] = gamma2;
+  B.data[4][4] = delta2 / signed_vol_times_6;
+  B.data[4][5] = gamma2 / signed_vol_times_6;
   B.data[4][6] = 0.0;
-  B.data[4][7] = delta3;
-  B.data[4][8] = gamma3;
+  B.data[4][7] = delta3 / signed_vol_times_6;
+  B.data[4][8] = gamma3 / signed_vol_times_6;
   B.data[4][9] = 0.0;
-  B.data[4][10] = delta4;
-  B.data[4][11] = gamma4;
+  B.data[4][10] = delta4 / signed_vol_times_6;
+  B.data[4][11] = gamma4 / signed_vol_times_6;
 
   // Row 5: [dN1_dz, 0, dN1_dx, dN2_dz, 0, dN2_dx, dN3_dz, 0, dN3_dx, dN4_dz, 0,
   // dN4_dx]
-  B.data[5][0] = delta1;
+  B.data[5][0] = delta1 / signed_vol_times_6;
   B.data[5][1] = 0.0;
-  B.data[5][2] = beta1;
-  B.data[5][3] = delta2;
+  B.data[5][2] = beta1 / signed_vol_times_6;
+  B.data[5][3] = delta2 / signed_vol_times_6;
   B.data[5][4] = 0.0;
-  B.data[5][5] = beta2;
-  B.data[5][6] = delta3;
+  B.data[5][5] = beta2 / signed_vol_times_6;
+  B.data[5][6] = delta3 / signed_vol_times_6;
   B.data[5][7] = 0.0;
-  B.data[5][8] = beta3;
-  B.data[5][9] = delta4;
+  B.data[5][8] = beta3 / signed_vol_times_6;
+  B.data[5][9] = delta4 / signed_vol_times_6;
   B.data[5][10] = 0.0;
-  B.data[5][11] = beta4;
+  B.data[5][11] = beta4 / signed_vol_times_6;
 
   return B;
 }
